@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Mạng Máy Tính - Chương 3</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .quiz-option.selected {
+      background-color: #3b82f6;
+      /* bg-blue-500 */
+      color: white;
+      border-color: #2563eb;
+      /* border-blue-700 */
+    }
+
+    .quiz-option:not(.selected):hover {
+      background-color: #dbeafe;
+      /* bg-blue-100 */
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+  <div id="quiz-container" class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto">
+    <div id="quiz-header" class="mb-6 border-b pb-4">
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Quiz Mạng Máy Tính - Chương 3</h1>
+      <p id="progress-text" class="text-sm text-slate-500 mt-2">Câu 1 trên 51</p>
+    </div>
+
+    <div id="question-area">
+      <h2 id="question-text" class="text-lg font-semibold text-slate-700 mb-5"></h2>
+      <div id="options-container" class="space-y-3">
+        <!-- Options will be dynamically inserted here -->
+      </div>
+    </div>
+
+    <div id="navigation-buttons" class="mt-8 flex justify-between items-center">
+      <button id="prev-btn"
+        class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-6 rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">Câu
+        Trước</button>
+      <button id="next-btn"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">Câu
+        Tiếp</button>
+      <button id="submit-btn"
+        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 hidden">Nộp
+        Bài</button>
+    </div>
+  </div>
+
+  <div id="result-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto hidden">
+    <h1 class="text-3xl font-bold text-slate-800 text-center">Kết Quả Bài Làm</h1>
+    <div id="score-text" class="text-center text-2xl font-semibold my-6 bg-blue-100 text-blue-800 p-4 rounded-lg"></div>
+    <div id="review-area" class="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+      <!-- Review questions will be here -->
+    </div>
+    <div class="text-center mt-8">
+      <button id="restart-btn"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300">Làm
+        Lại</button>
+    </div>
+  </div>
+
+
+  <script>
+    const quizData = [
+      // Lớp mạng
+      {
+        question: "Lớp mạng cho phép kết nối các thiết bị với nhau",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Định tuyến là một trong bốn hoạt động cơ bản của tầng mạng:",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "IPv6 là một giao thức nằm ở tầng Internet",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Đặc điểm của lớp mạng là chuyển dữ liệu thành dạng tín hiệu để truyền qua mạng",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Chuyển tiếp không phải là một trong những hoạt động cơ bản của lớp mạng",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "IPX không phải là một giao thức kết nối mạng",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Giao thức định tuyến được dùng để",
+        options: ["Trao đổi thông tin chuyển tiếp dữ liệu qua mạng",
+          "Trao đổi thông tin định tuyến giữa các thiết bị định tuyến trên mạng", "Kết nối liên mạng",
+          "Phân giải địa chỉ"
+        ],
+        answer: "Trao đổi thông tin định tuyến giữa các thiết bị định tuyến trên mạng",
+        type: "single"
+      },
+      {
+        question: "Đơn vị dữ liệu thông tin ở tầng Mạng trong mô hình OSI được gọi là gì?",
+        options: ["Bit", "Frame", "Packet", "Segment"],
+        answer: "Packet",
+        type: "single"
+      },
+      {
+        question: "Trong những công việc sau, công việc nào không phải là chức năng của tầng Mạng",
+        options: ["Đánh địa chỉ logic cho máy tính", "Đặt tên gọi nhớ cho máy tính", "Tìm đường đi cho các gói tin",
+          "Giải quyết tắc nghẽn"
+        ],
+        answer: "Đặt tên gọi nhớ cho máy tính",
+        type: "single"
+      },
+      {
+        question: "Giao thức ICMP nằm ở tầng nào:",
+        options: ["Tầng Network", "Tầng Data Link", "Tầng Vật lý", "Tầng Ứng dụng"],
+        answer: "Tầng Network",
+        type: "single"
+      },
+      {
+        question: "Những giao thức nào dưới đây là giao thức định tuyến (Chọn 3)",
+        options: ["BGP", "OSPF", "IGRP", "IGMP"],
+        answer: ["BGP", "OSPF", "IGRP"],
+        type: "multiple"
+      },
+      {
+        question: "Những giao thức nào dưới đây là giao thức kết nối mạng (Chọn 3)",
+        options: ["IPX", "IPv6", "Apple Talk", "IS-IS"],
+        answer: ["IPX", "IPv6", "Apple Talk"],
+        type: "multiple"
+      },
+      {
+        question: "Giao thức nào dưới đây không phải là giao thức định tuyến (Chọn 3)",
+        options: ["IPv6", "BGP", "IPv4", "SNMP"],
+        answer: ["IPv6", "IPv4", "SNMP"],
+        type: "multiple"
+      },
+      {
+        question: "Đặc điểm của tầng Mạng là: (Chọn 3)",
+        options: ["Cho phép kết nối các thiết bị với nhau",
+          "Các gói được gửi từ nguồn tới đích bằng cách sử dụng địa chỉ",
+          "Nằm giữa tầng Giao vận và tầng Liên kết dữ liệu", "Truyền tải các bit trên đường truyền vật lý"
+        ],
+        answer: ["Cho phép kết nối các thiết bị với nhau",
+          "Các gói được gửi từ nguồn tới đích bằng cách sử dụng địa chỉ",
+          "Nằm giữa tầng Giao vận và tầng Liên kết dữ liệu"
+        ],
+        type: "multiple"
+      },
+
+      // Giao thức Internet
+      {
+        question: "Địa chỉ IPv6 có độ dài 128 bits",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ IPv4 có độ dài là 64 bits",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "192.168.0.0/24 là một địa chỉ public (địa chỉ công cộng)",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ mạng và địa chỉ quảng bá (ở lớp mạng) không được gán cho các thiết bị",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ IP không thay đổi từ nguồn tới đích:",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "IETF là một trong số nhiều tổ chức chịu trách nhiệm về việc xác định các tiêu chuẩn liên quan tới bộ giao thức TCP/IP",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ IPv6 nguồn phải là địa chỉ multicast",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ IPv6 gồm bao nhiêu bit:",
+        options: ["124", "126", "128", "130"],
+        answer: "128",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ IP nào dưới đây được biểu diễn ở dạng (dotted-decimal) số thập phân – chấm:",
+        options: ["102.61.91.0", "17.183.19.0/24", "72.256.1.100", "34.78.51.208."],
+        answer: "102.61.91.0",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ IP của PC nào dưới đây KHÔNG được biểu diễn ở dạng CIDR:",
+        options: ["202.57.134.19", "107.23.109.76/24", "72.26.19.0/24", "34.203.251.255/24"],
+        answer: "202.57.134.19",
+        type: "single"
+      },
+      {
+        question: "Thông tin nào sau đây là địa chỉ IP hợp lệ:",
+        options: ["191.255.33.7", "208.151.256.10", "127.191.257.30", "208.191.256.30"],
+        answer: "191.255.33.7",
+        type: "single"
+      },
+      {
+        question: "Giả sử máy A có địa chỉ 172.29.14.11/24 và máy B có địa chỉ 172.29.14.100/24. Tại máy A, để kiểm tra xem có thể gửi dữ liệu đến máy B được hay không, ta dùng lệnh nào:",
+        options: ["Ping 172.29.14.11", "Ping 172.29.14.100", "Ipconfig 172.29.14.100", "Ipconfig 172.29.14.11"],
+        answer: "Ping 172.29.14.100",
+        type: "single"
+      },
+      {
+        question: "Sử dụng các quy tắc rút gọn để biểu diễn địa chỉ IPv6 sau: \"0800:0000:0000:0000:0123:0000:0000:CDEF\"",
+        options: ["08::123::CDEF", "800::123:0:0:CDEF", "8::123:0000:0000:CDEF", "800::123:0000:0000:CDEF"],
+        answer: "800::123:0:0:CDEF",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ logic (hay địa chỉ IP) sẽ được đóng gói ở tầng nào của mô hình OSI?",
+        options: ["Tầng vật lý", "Tầng liên kết dữ liệu", "Tầng mạng", "Tầng giao vận"],
+        answer: "Tầng mạng",
+        type: "single"
+      },
+      {
+        question: "Loại địa chỉ nào được sử dụng để gán cho thiết bị máy chủ để truyền dữ liệu ở Tầng Mạng?",
+        options: ["Địa chỉ liên kết dữ liệu", "Địa chỉ logic (địa chỉ IP)", "Địa chỉ lớp 2", "Địa chỉ vật lý"],
+        answer: "Địa chỉ logic (địa chỉ IP)",
+        type: "single"
+      },
+      {
+        question: "Phần nào là thành phần cố định trong địa chỉ IPv4?",
+        options: ["Phần mạng con", "Phần mạng", "Phần logic", "Phần host"],
+        answer: "Phần mạng",
+        type: "single"
+      },
+      {
+        question: "Phát biểu nào dưới đây là đúng:",
+        options: ["Địa chỉ IPv6 được biểu thị bằng số thập lục phân.",
+          "Địa chỉ IPv4 được biểu thị bằng số thập lục phân.", "Địa chỉ IPv6 có độ dài 32 bit.",
+          "Địa chỉ IPv4 có độ dài 128 bit."
+        ],
+        answer: "Địa chỉ IPv6 được biểu thị bằng số thập lục phân.",
+        type: "single"
+      },
+      {
+        question: "Các đặc điểm cơ bản của giao thức Internet là (Chọn 3)",
+        options: ["Không kết nối (Connectionless)", "Không tin cậy (Best-effort/Unreliable)",
+          "Không phụ thuộc vào môi trường (Media Independent)", "Tin cậy"
+        ],
+        answer: ["Không kết nối (Connectionless)", "Không tin cậy (Best-effort/Unreliable)",
+          "Không phụ thuộc vào môi trường (Media Independent)"
+        ],
+        type: "multiple"
+      },
+      {
+        question: "Những địa chỉ IP nào sau đây là địa chỉ public (Chọn 3)",
+        options: ["112.64.12.29", "192.168.23.252", "198.234.12.95", "212.193.48.254"],
+        answer: ["112.64.12.29", "198.234.12.95", "212.193.48.254"],
+        type: "multiple"
+      },
+      {
+        question: "Ưu điểm của địa chỉ IPv6 so với IPv4 (Chọn 3)",
+        options: ["Tăng không gian địa chỉ", "Bảo mật tốt hơn (Tích hợp IPsec)", "Hỗ trợ di động tốt hơn",
+          "Không hỗ trợ QoS"
+        ],
+        answer: ["Tăng không gian địa chỉ", "Bảo mật tốt hơn (Tích hợp IPsec)", "Hỗ trợ di động tốt hơn"],
+        type: "multiple"
+      },
+      {
+        question: "Địa chỉ IP nào sau đây KHÔNG là địa chỉ dạng Private? (Chọn 3)",
+        options: ["172.30.150.17/16", "172.40.150.17/16", "172.50.150.17/16", "172.60.150.17/16"],
+        answer: ["172.40.150.17/16", "172.50.150.17/16", "172.60.150.17/16"],
+        type: "multiple"
+      },
+      {
+        question: "Địa chỉ nào sau đây KHÔNG phải là địa chỉ mạng của host 12.16.25.14/30 (Chọn 3)",
+        options: ["12.16.25.4/30", "12.16.25.6/30", "12.16.25.8/30", "12.16.25.12/30"],
+        answer: ["12.16.25.4/30", "12.16.25.6/30", "12.16.25.8/30"],
+        type: "multiple"
+      },
+      {
+        question: "Địa chỉ nào sau đây KHÔNG phải là địa chỉ quảng bá của mạng 19.18.25.128/27 (Chọn 3)",
+        options: ["19.18.25.255/27", "19.18.25.128/27", "19.18.25.100/27", "19.18.25.159/27"],
+        answer: ["19.18.25.255/27", "19.18.25.128/27", "19.18.25.100/27"],
+        type: "multiple"
+      },
+      {
+        question: "Các loại địa chỉ IPv6 là (Chọn 3)",
+        options: ["Unicast", "Multicast", "Anycast", "Broadcast"],
+        answer: ["Unicast", "Multicast", "Anycast"],
+        type: "multiple"
+      },
+      {
+        question: "Để các gói được gửi đến một đích ở xa, ba thông tin nào phải được cấu hình trên máy chủ? (Chọn 3)",
+        options: ["Hostname", "Địa chỉ IP", "Subnetmask", "Default Gateway"],
+        answer: ["Địa chỉ IP", "Subnetmask", "Default Gateway"],
+        type: "multiple"
+      },
+
+      // Giao thức định tuyến
+      {
+        question: "OSPF là một giao thức định tuyến?",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Hệ thống tự trị (AS) được điều hành bởi nhiều tổ chức?",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Có 3 loại ASN?",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Nếu dữ liệu liên tục thay đổi hướng khi tới đích, chứng tỏ quá trình định tuyến là động?",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "IGRP là giao thức định tuyến sử dụng thuật toán tính đường đi tốt nhất tới đích.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Giao thức định tuyến động tự động chia sẻ thông tin định tuyến giữa các bộ định tuyến (Routers).",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Số hiệu mạng (ASN) được cấp và quản lý bởi IANA",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Khi sử dụng định tuyến tĩnh, người quản trị phải cấu hình thù công trên bộ định tuyến",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Giao thức định tuyến động là một tập hợp các tiến trình, thuật toán, bản tin được sử dụng để trao đổi thông tin định tuyến và lựa chọn đường đi tốt nhất cập nhật vào bảng định tuyến.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Một máy tính trong một mạng đang liên lạc với một nhóm máy tính cụ thể. Đây là loại giao tiếp gì?",
+        options: ["Broadcast", "Multicast", "Unicast", "Anycast"],
+        answer: "Multicast",
+        type: "single"
+      },
+      {
+        question: "Khả năng định tuyến được thực hiện bởi thiết bị:",
+        options: ["Switch", "Hub", "Bridge", "Router"],
+        answer: "Router",
+        type: "single"
+      },
+      {
+        question: "Chức năng của default gateway trong bảng định tuyến của Router là:",
+        options: [
+          "Chỉ định đến địa chỉ tiếp theo (next hop) của gói dữ liệu nếu router không biết đường gửi đến đích",
+          "Dùng để ấn định subnet mặc định cho mạng LAN",
+          "Dùng xác định địa chỉ nguồn cho các gói dữ liệu gửi ra ngoài",
+          "Là địa chỉ NAT của firewall khi kết nối các máy tính vào Internet"
+        ],
+        answer: "Chỉ định đến địa chỉ tiếp theo (next hop) của gói dữ liệu nếu router không biết đường gửi đến đích",
+        type: "single"
+      },
+      {
+        question: "Định tuyến tĩnh là loại định tuyến:",
+        options: ["Dùng cho mạng đơn giản, nhỏ", "Chỉ kích hoạt giao thức thức định tuyến trên Router",
+          "Chỉ rõ đường đi trên mạng cho gói tin", "Dùng cho mạng lớn, phức tạp"
+        ],
+        answer: "Chỉ rõ đường đi trên mạng cho gói tin",
+        type: "single"
+      },
+      {
+        question: "Trong quá trình chuyển tiếp lưu lượng, Router sẽ làm gì ngay sau khi khớp địa chỉ IP đích với mạng trên mục nhập bảng định tuyến được kết nối trực tiếp?",
+        options: ["Loại bỏ lưu lượng truy cập sau khi tham khảo Router table",
+          "Tra cứu địa chỉ hop tiếp theo của gói tin", "Chuyển packet sang interface được kết nối trực tiếp",
+          "Phân tích địa chỉ IP đích"
+        ],
+        answer: "Chuyển packet sang interface được kết nối trực tiếp",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ IPv6 nào dưới đây thuộc nhóm IPv6 unicast là:",
+        options: ["Multicast", "Loopback", "Anycast", "Broadcast"],
+        answer: "Loopback",
+        type: "single"
+      },
+      {
+        question: "Thiết bị IPv6 gửi gói dữ liệu có địa chỉ đích là FF02::1. Mục tiêu của gói này là gì?",
+        options: ["Tất cả các máy chủ IPv6 DHCP", "Tất cả các nút kích hoạt IPv6 trên liên kết cục bộ",
+          "Tất cả các Router được cấu hình IPv6 trên liên kết cục bộ",
+          "Tất cả các Router được cấu hình IPv6 trên mạng"
+        ],
+        answer: "Tất cả các nút kích hoạt IPv6 trên liên kết cục bộ",
+        type: "single"
+      },
+      {
+        question: "Chức năng của Router là gì?",
+        options: ["Nó kết nối nhiều mạng IP.", "Nó kiểm soát luồng dữ liệu thông qua việc sử dụng địa chỉ Lớp 2.",
+          "Nó làm tăng kích thước của broadcast.", "Nó quản lý cơ sở dữ liệu Vlan."
+        ],
+        answer: "Nó kết nối nhiều mạng IP.",
+        type: "single"
+      },
+      {
+        question: "Loại địa chỉ IPv6 nào được yêu cầu bắt buộc trên các giao diện hỗ trợ IPv6?",
+        options: ["loopback", "unique local", "link-local", "static"],
+        answer: "link-local",
+        type: "single"
+      },
+      {
+        question: "Loại định tuyến nào cho phép Router chuyển tiếp gói tin ngay cả khi nó không có thông tin về mạng đích?",
+        options: ["dynamic route", "default route", "destination route", "generic route"],
+        answer: "default route",
+        type: "single"
+      },
+      {
+        question: "Giao thức định tuyến động thực hiện nhiệm vụ gì:",
+        options: ["Trao đổi thông tin định tuyến định kỳ", "Tự động trao đổi thông tin định tuyến",
+          "Trao đổi thông tin định tuyến khi có yêu cầu",
+          "Trao đổi thông tin định tuyến theo kế hoạch của quản trị hệ thống"
+        ],
+        answer: "Tự động trao đổi thông tin định tuyến",
+        type: "single"
+      },
+      {
+        question: "Mục đích của giao thức định tuyến là: (Chọn 3)",
+        options: ["Trao đổi thông tin giữa các thiết bị định tuyến", "Tăng tính hiệu quả giao tiếp giữa các máy tính",
+          "Tìm đường đi tối ưu", "Tìm kiếm địa chỉ MAC"
+        ],
+        answer: ["Trao đổi thông tin giữa các thiết bị định tuyến", "Tìm đường đi tối ưu",
+          "Duy trì thông tin định tuyến"
+        ],
+        type: "multiple"
+      },
+      {
+        question: "Dải địa chỉ liên kết cục bộ nào KHÔNG thể được gán cho interface hỗ trợ IPv6? (Chọn 3)",
+        options: ["FEC0::/10", "FE80::/8", "FE80::/10", "FEC0::/8"],
+        answer: ["FEC0::/10", "FE80::/8", "FEC0::/8"],
+        type: "multiple"
+      },
+      {
+        question: "Địa chỉ nào không phải là địa chỉ mạng cho địa chỉ 2001:DB8:BC15:A:12AB::1/64: (Chọn 3)",
+        options: ["2001:DB8:BC15:: 0/64", "2001:DB8:BC15:A::0/64", "2001:DB8:BC15:A:1::1/64",
+          "2001:DB8:BC15:A:12::0/64"
+        ],
+        answer: ["2001:DB8:BC15:: 0/64", "2001:DB8:BC15:A:1::1/64", "2001:DB8:BC15:A:12::0/64"],
+        type: "multiple"
+      },
+      {
+        question: "Các thuật toán tính toán đường đi tốt nhất tới đích là: (Chọn 3)",
+        options: ["Thuật toán khoảng cách - véc tơ (Distance-Vector)", "Thuật toán trạng thái đường (Link-State)",
+          "Thuật toán đường đi tốt nhất (Path-Vector)", "Thuật toán khoảng cách - trạng thái"
+        ],
+        answer: ["Thuật toán khoảng cách - véc tơ (Distance-Vector)", "Thuật toán trạng thái đường (Link-State)",
+          "Thuật toán đường đi tốt nhất (Path-Vector)"
+        ],
+        type: "multiple"
+      },
+      {
+        question: "Mục đích của giao thức định tuyến động là: (Chọn 3)",
+        options: ["Khám phá các mạng ở xa", "Tìm đường đi tối ưu", "Duy trì thông tin định tuyến", "Kiểm soát luồng"],
+        answer: ["Khám phá các mạng ở xa", "Tìm đường đi tối ưu", "Duy trì thông tin định tuyến"],
+        type: "multiple"
+      },
+      {
+        question: "Các giao thức định tuyến là: (Chọn 3)",
+        options: ["IGP", "EGP", "BGP", "ARP"],
+        answer: ["IGP", "EGP", "BGP"],
+        type: "multiple"
+      },
+      {
+        question: "Các loại giao thức định tuyến là (Chọn 3)",
+        options: ["Định tuyến tĩnh", "Định tuyến động", "Định tuyến mặc định", "Định tuyến vòng"],
+        answer: ["Định tuyến tĩnh", "Định tuyến động", "Định tuyến mặc định"],
+        type: "multiple"
+      },
+      {
+        question: "Các giao thức nào dưới đây dùng thuật toán khoảng cách - véc tơ (Chọn 3)",
+        options: ["RIPv1", "RIPv2", "IGRP", "IS-IS"],
+        answer: ["RIPv1", "RIPv2", "IGRP"],
+        type: "multiple"
+      },
+      {
+        question: "Các chức năng trong giao thức định tuyến động (Chọn 3)",
+        options: ["Tự động chia sẻ thông tin định tuyến giữa các Routers",
+          "Tự động cập nhật bảng định tuyến khi kết nối thay đổi", "Tìm đường đi tốt nhất tới đích",
+          "Tự động phát hiện tuyến mới và tối ưu"
+        ],
+        answer: ["Tự động chia sẻ thông tin định tuyến giữa các Routers",
+          "Tự động cập nhật bảng định tuyến khi kết nối thay đổi", "Tìm đường đi tốt nhất tới đích"
+        ],
+        type: "multiple"
+      },
+
+      // Thiết bị định tuyến
+      {
+        question: "Chuyển tiếp là một nhiệm vụ của Router:",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Router có chức năng định tuyến:",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Câu lệnh để hiển thị bảng định tuyến trên Router Cisco 2811 là \"show ip cef\"",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Thiết bị nào thực hiện chức năng xác định đường đi cho gói tin qua mạng?",
+        options: ["Router", "Tường lửa", "Web Server", "Modem DSL"],
+        answer: "Router",
+        type: "single"
+      },
+      {
+        question: "Nếu Default Gateway được cấu hình không chính xác trên các máy tính thì hiện tượng gì sẽ xảy ra ?",
+        options: ["Máy không thể giao tiếp trên mạng cục bộ.",
+          "Máy có thể giao tiếp với các máy khác trên mạng cục bộ nhưng không thể giao tiếp với các máy trên mạng từ xa.",
+          "Máy có thể giao tiếp với các máy khác trên mạng từ xa, nhưng không thể giao tiếp với các máy trên mạng cục bộ.",
+          "Không có ảnh hưởng gì"
+        ],
+        answer: "Máy có thể giao tiếp với các máy khác trên mạng cục bộ nhưng không thể giao tiếp với các máy trên mạng từ xa.",
+        type: "single"
+      },
+      {
+        question: "Quản trị mạng cấu hình router bằng lệnh “ip route 0.0.0.0 0.0.0.0 209.165.200.226\", mục đích của lệnh này là gì?",
+        options: ["Để chuyển tiếp các gói đến thiết bị có địa chỉ IP 209.165.200.226",
+          "Để thêm tuyến động cho mạng đích 0.0.0.0 vào bảng định tuyến",
+          "Để chuyển tiếp các gói dành cho mạng 0.0.0.0 tới thiết bị có địa chỉ IP 209.165.200.226",
+          "Để cung cấp một tuyến chuyển tiếp các gói, khi không có tuyến đường nào phù hợp với nó trong bảng định tuyến"
+        ],
+        answer: "Để cung cấp một tuyến chuyển tiếp các gói, khi không có tuyến đường nào phù hợp với nó trong bảng định tuyến",
+        type: "single"
+      },
+      {
+        question: "Đâu là những trường thông tin được ghi trong bảng định tuyến (Chọn 3)",
+        options: ["Destination", "Next-Hop", "Outgoing Interface", "Next-Interface"],
+        answer: ["Destination", "Next-Hop", "Outgoing Interface"],
+        type: "multiple"
+      },
+      {
+        question: "Những câu lệnh nào dùng để thoát trong Router: (Chọn 3)",
+        options: ["logout", "end", "exit", "off"],
+        answer: ["logout", "end", "exit"],
+        type: "multiple"
+      },
+      {
+        question: "Những lệnh sau, lệnh nào được sử dụng trên thiết bị Router (Chọn 3)",
+        options: ["show ip", "show ip cef", "switchport mode access", "show ipv4"],
+        answer: ["show ip", "show ip cef", "show ipv4"],
+        type: "multiple"
+      },
+      {
+        question: "Đâu là các tham số được sử dụng để hiển thị trong bảng định tuyến (Chọn 3)",
+        options: ["S", "C", "*", "W"],
+        answer: ["S", "C", "*"],
+        type: "multiple"
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+
+    const quizContainer = document.getElementById('quiz-container');
+    const resultContainer = document.getElementById('result-container');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const progressText = document.getElementById('progress-text');
+
+    function loadQuestion() {
+      const currentQuestion = quizData[currentQuestionIndex];
+      questionText.textContent = `Câu ${currentQuestionIndex + 1}: ${currentQuestion.question}`;
+      optionsContainer.innerHTML = '';
+
+      const inputType = currentQuestion.type === 'single' ? 'radio' : 'checkbox';
+
+      currentQuestion.options.forEach((option, index) => {
+        const optionId = `q${currentQuestionIndex}-option${index}`;
+        const optionWrapper = document.createElement('div');
+        optionWrapper.classList.add('quiz-option', 'p-4', 'border', 'rounded-lg', 'cursor-pointer',
+          'transition-colors', 'duration-200');
+
+        const input = document.createElement('input');
+        input.type = inputType;
+        input.id = optionId;
+        input.name = `q${currentQuestionIndex}`;
+        input.value = option;
+        input.className = "hidden";
+
+        const label = document.createElement('label');
+        label.htmlFor = optionId;
+        label.textContent = option;
+        label.className = "block w-full cursor-pointer";
+
+        optionWrapper.appendChild(input);
+        optionWrapper.appendChild(label);
+        optionsContainer.appendChild(optionWrapper);
+
+        optionWrapper.addEventListener('click', () => handleOptionSelect(optionWrapper, input));
+      });
+
+      restoreAnswer();
+      updateProgress();
+      updateButtonVisibility();
+    }
+
+    function handleOptionSelect(wrapper, input) {
+      const currentQuestion = quizData[currentQuestionIndex];
+      if (currentQuestion.type === 'single') {
+        // Deselect all options in the current question first
+        wrapper.parentElement.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+        // Select the clicked one
+        wrapper.classList.add('selected');
+        input.checked = true;
+      } else {
+        // For multiple choice, just toggle
+        wrapper.classList.toggle('selected');
+        input.checked = wrapper.classList.contains('selected');
+      }
+      saveAnswer();
+    }
+
+    function saveAnswer() {
+      const currentQuestion = quizData[currentQuestionIndex];
+      if (currentQuestion.type === 'single') {
+        const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+        userAnswers[currentQuestionIndex] = selectedOption ? selectedOption.value : null;
+      } else {
+        const selectedOptions = Array.from(document.querySelectorAll(`input[name="q${currentQuestionIndex}"]:checked`))
+          .map(cb => cb.value);
+        userAnswers[currentQuestionIndex] = selectedOptions.length > 0 ? selectedOptions.sort() : null;
+      }
+    }
+
+    function restoreAnswer() {
+      const savedAnswer = userAnswers[currentQuestionIndex];
+      if (savedAnswer === null) return;
+
+      const inputs = document.querySelectorAll(`input[name="q${currentQuestionIndex}"]`);
+      inputs.forEach(input => {
+        if (Array.isArray(savedAnswer)) { // Multiple choice
+          if (savedAnswer.includes(input.value)) {
+            input.checked = true;
+            input.parentElement.classList.add('selected');
+          }
+        } else { // Single choice
+          if (input.value === savedAnswer) {
+            input.checked = true;
+            input.parentElement.classList.add('selected');
+          }
+        }
+      });
+    }
+
+    function updateProgress() {
+      progressText.textContent = `Câu ${currentQuestionIndex + 1} trên ${quizData.length}`;
+    }
+
+    function updateButtonVisibility() {
+      prevBtn.disabled = currentQuestionIndex === 0;
+      if (currentQuestionIndex === quizData.length - 1) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+    }
+
+    function showNextQuestion() {
+      if (currentQuestionIndex < quizData.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion();
+      }
+    }
+
+    function showPrevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        loadQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      quizContainer.classList.add('hidden');
+      resultContainer.classList.remove('hidden');
+      showResults();
+    }
+
+    function showResults() {
+      let score = 0;
+      const reviewArea = document.getElementById('review-area');
+      reviewArea.innerHTML = '';
+
+      quizData.forEach((question, index) => {
+        const userAnswer = userAnswers[index];
+        const correctAnswer = question.answer;
+        let isCorrect = false;
+
+        if (question.type === 'single') {
+          if (userAnswer === correctAnswer) {
+            isCorrect = true;
+          }
+        } else { // Multiple choice
+          const sortedUserAnswer = Array.isArray(userAnswer) ? userAnswer.slice().sort() : [];
+          const sortedCorrectAnswer = correctAnswer.slice().sort();
+          if (JSON.stringify(sortedUserAnswer) === JSON.stringify(sortedCorrectAnswer)) {
+            isCorrect = true;
+          }
+        }
+
+        if (isCorrect) score++;
+
+        const reviewBlock = document.createElement('div');
+        reviewBlock.className =
+          `p-4 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`;
+
+        let answerHtml = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${question.question}</p>
+                    <p class="mt-2 text-sm"><b>Bạn chọn:</b> ${userAnswer ? (Array.isArray(userAnswer) ? userAnswer.join(', ') : userAnswer) : 'Chưa trả lời'}</p>
+                    <p class="mt-1 text-sm"><b>Đáp án đúng:</b> ${Array.isArray(correctAnswer) ? correctAnswer.join(', ') : correctAnswer}</p>
+                `;
+        reviewBlock.innerHTML = answerHtml;
+        reviewArea.appendChild(reviewBlock);
+      });
+
+      const scoreText = document.getElementById('score-text');
+      scoreText.textContent = `Bạn đã trả lời đúng ${score} / ${quizData.length} câu!`;
+    }
+
+    function restartQuiz() {
+      currentQuestionIndex = 0;
+      userAnswers.fill(null);
+      resultContainer.classList.add('hidden');
+      quizContainer.classList.remove('hidden');
+      loadQuestion();
+    }
+
+    prevBtn.addEventListener('click', showPrevQuestion);
+    nextBtn.addEventListener('click', showNextQuestion);
+    submitBtn.addEventListener('click', submitQuiz);
+    restartBtn.addEventListener('click', restartQuiz);
+
+    // Initial load
+    window.onload = loadQuestion;
+  </script>
+</body>
+
+</html>

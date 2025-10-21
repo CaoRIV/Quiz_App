@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Mạng Máy Tính - Chương 3</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .quiz-option.selected {
+      background-color: #3b82f6;
+      /* bg-blue-500 */
+      color: white;
+      border-color: #2563eb;
+      /* border-blue-700 */
+    }
+
+    .quiz-option:not(.selected):hover {
+      background-color: #dbeafe;
+      /* bg-blue-100 */
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+  <div id="quiz-container" class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto">
+    <div id="quiz-header" class="mb-6 border-b pb-4">
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Quiz Mạng Máy Tính - Chương 4</h1>
+      <p id="progress-text" class="text-sm text-slate-500 mt-2">Câu 1 trên 51</p>
+    </div>
+
+    <div id="question-area">
+      <h2 id="question-text" class="text-lg font-semibold text-slate-700 mb-5"></h2>
+      <div id="options-container" class="space-y-3">
+        <!-- Options will be dynamically inserted here -->
+      </div>
+    </div>
+
+    <div id="navigation-buttons" class="mt-8 flex justify-between items-center">
+      <button id="prev-btn"
+        class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-6 rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">Câu
+        Trước</button>
+      <button id="next-btn"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">Câu
+        Tiếp</button>
+      <button id="submit-btn"
+        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 hidden">Nộp
+        Bài</button>
+    </div>
+  </div>
+
+  <div id="result-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto hidden">
+    <h1 class="text-3xl font-bold text-slate-800 text-center">Kết Quả Bài Làm</h1>
+    <div id="score-text" class="text-center text-2xl font-semibold my-6 bg-blue-100 text-blue-800 p-4 rounded-lg"></div>
+    <div id="review-area" class="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+      <!-- Review questions will be here -->
+    </div>
+    <div class="text-center mt-8">
+      <button id="restart-btn"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300">Làm
+        Lại</button>
+    </div>
+  </div>
+
+
+  <script>
+    const quizData = [{
+        question: "UDP và TCP là các giao thức nằm ở tầng giao vận?",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Các ứng dụng trao đổi dữ liệu giữa hai máy đều liên quan tới số hiệu cổng tầng giao vận.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Tầng giao vận đảm bảo dữ liệu có thể được tập hợp lại một cách chính xác ở bên nhận bằng các quá trình phân mảnh (hoặc phân đoạn) và tập hợp lại?",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ Default Gateway là một thành phần của Socket?",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Phát biểu nào sau đây (tầng giao vận) là sai:",
+        options: ["Port dùng để kết nối Client/Server", "Port xác định ứng dụng truyền/nhận dữ liệu",
+          "Port có giá trị từ 1 đến 1023", "Port được dùng cho TCP và UDP"
+        ],
+        answer: "Port có giá trị từ 1 đến 1023",
+        type: "single"
+      },
+      {
+        question: "Port mặc định của HTTP server là:",
+        options: ["TCP/80", "TCP/23", "UDP/25", "UDP/110"],
+        answer: "TCP/80",
+        type: "single"
+      },
+      {
+        question: "Phát biểu nào dưới đây là đúng với số hiệu cổng (port number):",
+        options: ["Địa chỉ của một ứng dụng trên internet", "Địa chỉ của một máy tính trên internet",
+          "Địa chỉ của một ứng dụng trên một máy tính",
+          "Liên kết với giao thức tầng Giao vận để xác định một ứng dụng"
+        ],
+        answer: "Liên kết với giao thức tầng Giao vận để xác định một ứng dụng",
+        type: "single"
+      },
+      {
+        question: "Để phát hiện lỗi trong khi truyền segment ở tầng giao vận, người ta sử dụng kỹ thuật:",
+        options: ["Số thứ tự", "Số thứ tự ghi nhận", "Bộ định thời", "Checksum"],
+        answer: "Checksum",
+        type: "single"
+      },
+      {
+        question: "Giao thức tầng giao vận nào sau đây được sử dụng trong mạng?",
+        options: ["TCP và FTP", "UDP và HTTP", "TCP và UDP", "HTTP và FTP"],
+        answer: "TCP và UDP",
+        type: "single"
+      },
+      {
+        question: "Các giao thức tầng giao vận xử lý vấn đề nào sau đây?",
+        options: ["Giao tiếp giữa ứng dụng với ứng dụng", "Giao tiếp giữa tiến trình với tiến trình",
+          "Giao tiếp giữa node với node", "Giao tiếp giữa con người với con người"
+        ],
+        answer: "Giao tiếp giữa tiến trình với tiến trình",
+        type: "single"
+      },
+      {
+        question: "Điểm truy cập dịch vụ ở tầng giao vận có tên là?",
+        options: ["Port", "Pipe", "Node", "Protocol"],
+        answer: "Port",
+        type: "single"
+      },
+      {
+        question: "Chức năng của tầng giao vận:",
+        options: ["Đảm bảo các yêu cầu truyền dữ liệu qua các phương tiện vật lý",
+          "Mã hóa dữ liệu để bảo mật thông tin trên đường tuyền",
+          "Thực hiện việc tạo luồng dữ liệu kết nối giữa các đầu cuối",
+          "Nén dữ liệu để việc truyền qua mạng nhanh hơn"
+        ],
+        answer: "Thực hiện việc tạo luồng dữ liệu kết nối giữa các đầu cuối",
+        type: "single"
+      },
+      {
+        question: "Ưu điểm của dịch vụ không kết nối (Connectionless service) khi so sánh với dịch vụ hướng kết nối (Connection-oriented service) ở tầng giao vận là",
+        options: ["Giải quyết tắc nghẽn tốt hơn", "Chất lượng dịch vụ có thể được đảm bảo",
+          "Không mất thời gian thiết lập và quản lý kết nối", "Độ tin cậy cao"
+        ],
+        answer: "Không mất thời gian thiết lập và quản lý kết nối",
+        type: "single"
+      },
+      {
+        question: "Nhiệm vụ nào dưới đây là của các tầng giao vận?",
+        options: ["Cung cấp quyền truy cập mạng", "Phân tách các luồng dữ liệu",
+          "Xác định đường đi tốt nhất để chuyển tiếp gói", "Dịch địa chỉ IP riêng sang địa chỉ IP công cộng"
+        ],
+        answer: "Phân tách các luồng dữ liệu",
+        type: "single"
+      },
+      {
+        question: "Thông tin nào dưới đây KHÔNG có trong tiêu đề của hai giao thức cơ bản ở tầng giao vận?",
+        options: ["Sequence number", "Checksum", "Source port", "Destination port"],
+        answer: "Sequence number",
+        type: "single"
+      },
+      {
+        question: "Dải số hiệu cổng thông dụng được sử dụng trong tầng giao vận (TCP và UDP) là:",
+        options: ["0-255", "0-1023", "256-1023", "1024-49151"],
+        answer: "0-1023",
+        type: "single"
+      },
+      {
+        question: "Ở tầng giao vận, socket là:",
+        options: ["Sự kết hợp giữa địa chỉ IP, số hiệu cổng và giao thức tầng ứng dụng",
+          "Sự kết hợp giữa địa chỉ IP, số hiệu mạng và giao thức tầng giao vận",
+          "Sự kết hợp giữa địa chỉ IP, số hiệu cổng và giao thức tầng giao vận",
+          "Sự kết hợp giữa địa chỉ IP, số hiệu công thông dụng và giao thức tầng ứng dụng"
+        ],
+        answer: "Sự kết hợp giữa địa chỉ IP, số hiệu cổng và giao thức tầng giao vận",
+        type: "single"
+      },
+      {
+        question: "Loại số hiệu cổng nào được IANA chỉ định cho các dịch vụ và ứng dụng thường được sử dụng?",
+        options: ["Private port", "Registered port", "Well-known port", "Dynamic port"],
+        answer: "Well-known port",
+        type: "single"
+      },
+      {
+        question: "Tầng giao vận sử dụng cổng 53 để mô tả giao thức nào?",
+        options: ["SNMP", "SMTP", "DHCP", "DNS"],
+        answer: "DNS",
+        type: "single"
+      },
+      {
+        question: "Nhiệm vụ chính trong tầng giao vận (Chọn 3)",
+        options: ["Theo dõi giao tiếp", "Phân mảnh (hoặc phân đoạn) dữ liệu", "Xác định các ứng dụng",
+          "Kiểm soát luồng dữ liệu"
+        ],
+        answer: ["Phân mảnh (hoặc phân đoạn) dữ liệu", "Xác định các ứng dụng", "Theo dõi giao tiếp"],
+        type: "multiple"
+      },
+      {
+        question: "Các phát biểu nào sau đây liên quan tới số hiệu cổng (Chọn 3)",
+        options: ["Mỗi số hiệu cổng được hiển thị bằng một số nguyên không dấu",
+          "Mỗi số hiệu cổng có độ dài 16-bit do ICANN cấp", "Mỗi số hiệu cổng có độ dài 16-bit do IANA cấp",
+          "Số hiệu cổng được dùng để xác định một ứng dụng"
+        ],
+        answer: ["Mỗi số hiệu cổng được hiển thị bằng một số nguyên không dấu",
+          "Mỗi số hiệu cổng có độ dài 16-bit do IANA cấp", "Số hiệu cổng được dùng để xác định một ứng dụng"
+        ],
+        type: "multiple"
+      },
+      {
+        question: "Dữ liệu được đóng gói trong tầng Giao vận KHÔNG được gọi là (Chọn 3)",
+        options: ["Segment hoặc Datagrama", "Segmen hoặc Datagram", "Segment hoặc Datagram", "Segmen hoặc Datagrama"],
+        answer: ["Segment hoặc Datagrama", "Segmen hoặc Datagram", "Segmen hoặc Datagrama"],
+        type: "multiple"
+      },
+
+      // Giao thức UDP
+      {
+        question: "UDP quản lý và theo dõi thứ tự Datagram.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "UDP phải sắp xếp lại Datagram theo thứ tự truyền.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Một trong các nhiệm vụ của UDP thiết lập phiên trước khi truyền dữ liệu giữa 2 thiết bị đầu cuối.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "UDP không có cơ chế phát hiện lỗi.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "UDP là giao thức truyền tin tin cậy.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Ứng dụng nào sau đây phù hợp nhất với UDP:",
+        options: ["Video Conference", "Truyền tải file qua mạng", "Thanh toán qua mạng", "Truyền tải email qua mạng"],
+        answer: "Video Conference",
+        type: "single"
+      },
+      {
+        question: "Giao thức UDP được gọi là không kết nối vì lý do nào sau đây:",
+        options: ["Các gói UDP được xử lý độc lập bởi lớp vận chuyển",
+          "Nó gửi dữ liệu dưới dạng luồng các gói liên quan", "Nó được nhận theo thứ tự như thứ tự đã gửi",
+          "Nó gửi dữ liệu rất nhanh"
+        ],
+        answer: "Các gói UDP được xử lý độc lập bởi lớp vận chuyển",
+        type: "single"
+      },
+      {
+        question: "Số hiệu cổng được sử dụng bởi Giao thức Network Time Protocol (NTP) với UDP là?",
+        options: ["161", "123", "162", "124"],
+        answer: "123",
+        type: "single"
+      },
+      {
+        question: "Cổng kết nối ở tầng Transport (giao thức UDP) của giao thức SNMP là:",
+        options: ["UDP/16", "UDP/25", "UDP/161", "UDP/23"],
+        answer: "UDP/161",
+        type: "single"
+      },
+      {
+        question: "Đặc điểm của giao thức UDP là gì?",
+        options: ["Truyền các gói dữ liệu theo đúng thứ tự", "Truyền lại các gói dữ liệu mất trên đường truyền",
+          "Không truyền lại các gói dữ liệu bị lỗi", "Không có câu nào đúng"
+        ],
+        answer: "Không truyền lại các gói dữ liệu bị lỗi",
+        type: "single"
+      },
+      {
+        question: "Loại ứng dụng nào phù hợp nhất để sử dụng UDP?",
+        options: ["Các ứng dụng nhạy cảm với độ trễ", "Các ứng dụng cần phân phối đáng tin cậy",
+          "Các ứng dụng yêu cầu truyền lại các gói bị mất", "Các ứng dụng nhạy cảm với việc mất gói"
+        ],
+        answer: "Các ứng dụng nhạy cảm với độ trễ",
+        type: "single"
+      },
+      {
+        question: "Hoạt động nào được máy khách thực hiện khi thiết lập liên lạc với máy chủ thông qua việc sử dụng UDP ở tầng giao vận?",
+        options: ["Máy khách đặt kích thước cửa sổ cho phiên.",
+          "Máy khách gửi SYN đến máy chủ để bắt đầu bắt tay 3 bước.",
+          "Máy khách chọn ngẫu nhiên một số hiệu cổng (Là cổng nguồn)",
+          "Máy khách gửi một gói tin đồng bộ hóa để yêu cầu kết nối."
+        ],
+        answer: "Máy khách chọn ngẫu nhiên một số hiệu cổng (Là cổng nguồn)",
+        type: "single"
+      },
+      {
+        question: "Tại sao UDP lại phù hợp làm giao thức tầng giao vận cho các ứng dụng như video, voice?",
+        options: ["UDP đáp ứng nhanh và ít tiêu tốn tài nguyên.",
+          "UDP cung cấp khả năng kiểm soát luồng bằng cách sử dụng cửa sổ trượt windows.",
+          "UDP cung cấp xác nhận dữ liệu đã nhận.", "UDP cung cấp một phiên đáng tin cậy."
+        ],
+        answer: "UDP đáp ứng nhanh và ít tiêu tốn tài nguyên.",
+        type: "single"
+      },
+      {
+        question: "Đặc điểm của UDP là gì?",
+        options: ["Nó thiết lập phiên kết nối qua quá trình bắt tay ba bước",
+          "Nó đóng phiên đã thiết lập qua quá trình bắt tay bốn bước",
+          "Nó cung cấp khả năng phân phối các datagram một cách không tin cậy",
+          "Nó cung cấp khả năng phân phối các segment một cách không tin cậy"
+        ],
+        answer: "Nó cung cấp khả năng phân phối các segment một cách không tin cậy",
+        type: "single"
+      },
+      {
+        question: "Các ứng dụng sử dụng giao thức UDP là (Chọn 3)",
+        options: ["Ứng dụng video và đa phương tiện trực tiếp", "Ứng dụng yêu cầu và trả lời đơn giản",
+          "Các ứng dụng tự xử lý độ tin cậy", "Ứng dụng gửi thư điện tử"
+        ],
+        answer: ["Ứng dụng video và đa phương tiện trực tiếp", "Ứng dụng yêu cầu và trả lời đơn giản",
+          "Các ứng dụng tự xử lý độ tin cậy"
+        ],
+        type: "multiple"
+      },
+      {
+        question: "Các giao thức nào chỉ sử dụng UDP (Chọn 3)",
+        options: ["DHCP", "TFTP", "NTP", "DNS"],
+        answer: ["DHCP", "TFTP", "NTP"],
+        type: "multiple"
+      },
+      {
+        question: "Phát biểu nào dưới đây là đúng khi nói về giao thức UDP (Chọn 3)",
+        options: ["Không có giai đoạn thiết lập kết nối", "Không duy trì trạng thái kết nối",
+          "Không kiểm soát tốc độ gửi", "Chỉ kiểm soát tốc độ nhận"
+        ],
+        answer: ["Không có giai đoạn thiết lập kết nối", "Không duy trì trạng thái kết nối",
+          "Không kiểm soát tốc độ gửi"
+        ],
+        type: "multiple"
+      },
+      {
+        question: "Các thành phần nằm trong UDP Header là (Chọn 3)",
+        options: ["Source Port", "Checksum", "Length", "SYN Bit"],
+        answer: ["Source Port", "Checksum", "Length"],
+        type: "multiple"
+      },
+      {
+        question: "Chức năng của giao thức UDP là (Chọn 3)",
+        options: ["Dữ liệu được xây dựng lại theo thứ tự nhận được.",
+          "Bất kỳ datagram nào bị mất sẽ không được gửi lại.", "Không thiết lập phiên", "Kiểm soát luồng"
+        ],
+        answer: ["Dữ liệu được xây dựng lại theo thứ tự nhận được.",
+          "Bất kỳ datagram nào bị mất sẽ không được gửi lại.", "Không thiết lập phiên"
+        ],
+        type: "multiple"
+      },
+
+      // Giao thức TCP
+      {
+        question: "Giao thức TCP sử dụng cửa sổ trượt để kiểm soát luồng.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Trong giao thức TCP, các gói tin được gọi là segment.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "TCP là một giao thức không tin cậy?",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "TCP không có chức năng sắp xếp lại các segment.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "TCP sử dụng cơ chế cửa sổ trượt để điều khiển tốc độ truyền dữ liệu.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Trong TCP, việc gửi và nhận dữ liệu được thực hiện dưới dạng",
+        options: ["Dòng bytes (Byte stream)", "Chuỗi các ký tự", "Các đường dữ liệu", "Các gói tin"],
+        answer: "Dòng bytes (Byte stream)",
+        type: "single"
+      },
+      {
+        question: "Một máy khách đã thực hiện yêu cầu HTTP tới trình duyệt web. Số hiệu địa chỉ cổng thông dụng nào được liên kết với địa chỉ đích?",
+        options: ["TCP/404", "TCP/110", "TCP/443", "TCP/80"],
+        answer: "TCP/80",
+        type: "single"
+      },
+      {
+        question: "Ứng dụng nào sau đây không phù hợp với giao thức TCP?",
+        options: ["Trình duyệt Web", "Hệ thống hội thảo video trực tuyến", "Hệ thống thanh toán qua mạng", "Email"],
+        answer: "Hệ thống hội thảo video trực tuyến",
+        type: "single"
+      },
+      {
+        question: "Acknowledgment number trong tiêu đề TCP là một số",
+        options: ["Độc lập", "Ngẫu nhiên", "Liên quan tới số SeqN của bên gửi",
+          "Không liên quan tới số SeqN của bên gửi"
+        ],
+        answer: "Liên quan tới số SeqN của bên gửi",
+        type: "single"
+      },
+      {
+        question: "Byte dữ liệu được truyền trong mỗi kết nối được đánh số bởi TCP. Những con số này có dạng?",
+        options: ["Số cố định", "Số 0", "Số 1", "Chuỗi số 0 và số 1"],
+        answer: "Chuỗi số 0 và số 1",
+        type: "single"
+      },
+      {
+        question: "Cổng kết nối của giao thức SMTP là",
+        options: ["TCP/24", "TCP/26", "TCP/25", "TCP/27"],
+        answer: "TCP/25",
+        type: "single"
+      },
+      {
+        question: "Quá trình bộ nhận kiểm soát lượng dữ liệu được gửi bởi người gửi được gọi là?",
+        options: ["Điều khiển luồng (Flow Control)", "Điều khiển lỗi", "Kiểm soát tắc nghẽn", "Phát hiện lỗi"],
+        answer: "Điều khiển luồng (Flow Control)",
+        type: "single"
+      },
+      {
+        question: "Thông số nào được nút nguồn lựa chọn ngẫu nhiên trước khi gửi dữ liệu",
+        options: ["Địa chỉ IP đích.", "Địa chỉ MAC nguồn.", "Địa chỉ cổng mặc định.", "Cổng nguồn."],
+        answer: "Cổng nguồn.",
+        type: "single"
+      },
+      {
+        question: "Trường thông tin Sequence Number trong tiêu đề của giao thức TCP dùng để làm gì?",
+        options: ["Lưu số thứ tự của gói tin", "Lưu mã xử lý lỗi của gói tin", "Lưu thông tin điều khiển lưu lượng",
+          "Lưu thông tin điều khiển xung đột"
+        ],
+        answer: "Lưu số thứ tự của gói tin",
+        type: "single"
+      },
+      {
+        question: "Trường nào trong tiêu đề TCP được sử dụng để bắt đầu quá trình bắt tay ba bước?",
+        options: ["FIN", "PSH", "RST", "SYN"],
+        answer: "SYN",
+        type: "single"
+      },
+      {
+        question: "Các chức năng trong giao thức TCP là (Chọn 3)",
+        options: ["Thiết lập phiên", "Đảm bảo tin cậy", "Điều khiển luồng", "Giữ và chuyển tiếp"],
+        answer: ["Thiết lập phiên", "Đảm bảo tin cậy", "Điều khiển luồng"],
+        type: "multiple"
+      },
+      {
+        question: "Các dịch vụ sử dụng giao thức TCP là (Chọn 3)",
+        options: ["FTP", "HTTP", "SMTP", "Streaming"],
+        answer: ["FTP", "HTTP", "SMTP"],
+        type: "multiple"
+      },
+      {
+        question: "Ba trường nào sau đây có trong tiêu đề TCP? (Chọn 3)",
+        options: ["ISN", "SYN", "FIN", "URG"],
+        answer: ["SYN", "FIN", "URG"],
+        type: "multiple"
+      },
+      {
+        question: "Các ý nào dưới đây nằm trong quá trình kết thúc phiên kết nối (Chọn 3)",
+        options: ["Khi Client không còn dữ liệu để gửi, nó sẽ gửi một segment có gán cờ FIN",
+          "Server gửi lại ACK để xác nhận đã nhận được FIN để chấm dứt phiên kết nối",
+          "Server gửi ISN để đóng phiên kết nối", "Client gửi lại ACK để xác nhận đã nhận được FIN từ Server"
+        ],
+        answer: ["Khi Client không còn dữ liệu để gửi, nó sẽ gửi một segment có gán cờ FIN",
+          "Server gửi lại ACK để xác nhận đã nhận được FIN để chấm dứt phiên kết nối",
+          "Client gửi lại ACK để xác nhận đã nhận được FIN từ Server"
+        ],
+        type: "multiple"
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+
+    const quizContainer = document.getElementById('quiz-container');
+    const resultContainer = document.getElementById('result-container');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const progressText = document.getElementById('progress-text');
+
+    function loadQuestion() {
+      const currentQuestion = quizData[currentQuestionIndex];
+      questionText.textContent = `Câu ${currentQuestionIndex + 1}: ${currentQuestion.question}`;
+      optionsContainer.innerHTML = '';
+
+      const inputType = currentQuestion.type === 'single' ? 'radio' : 'checkbox';
+
+      currentQuestion.options.forEach((option, index) => {
+        const optionId = `q${currentQuestionIndex}-option${index}`;
+        const optionWrapper = document.createElement('div');
+        optionWrapper.classList.add('quiz-option', 'p-4', 'border', 'rounded-lg', 'cursor-pointer',
+          'transition-colors', 'duration-200');
+
+        const input = document.createElement('input');
+        input.type = inputType;
+        input.id = optionId;
+        input.name = `q${currentQuestionIndex}`;
+        input.value = option;
+        input.className = "hidden";
+
+        const label = document.createElement('label');
+        label.htmlFor = optionId;
+        label.textContent = option;
+        label.className = "block w-full cursor-pointer";
+
+        optionWrapper.appendChild(input);
+        optionWrapper.appendChild(label);
+        optionsContainer.appendChild(optionWrapper);
+
+        optionWrapper.addEventListener('click', () => handleOptionSelect(optionWrapper, input));
+      });
+
+      restoreAnswer();
+      updateProgress();
+      updateButtonVisibility();
+    }
+
+    function handleOptionSelect(wrapper, input) {
+      const currentQuestion = quizData[currentQuestionIndex];
+      if (currentQuestion.type === 'single') {
+        // Deselect all options in the current question first
+        wrapper.parentElement.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+        // Select the clicked one
+        wrapper.classList.add('selected');
+        input.checked = true;
+      } else {
+        // For multiple choice, just toggle
+        wrapper.classList.toggle('selected');
+        input.checked = wrapper.classList.contains('selected');
+      }
+      saveAnswer();
+    }
+
+    function saveAnswer() {
+      const currentQuestion = quizData[currentQuestionIndex];
+      if (currentQuestion.type === 'single') {
+        const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+        userAnswers[currentQuestionIndex] = selectedOption ? selectedOption.value : null;
+      } else {
+        const selectedOptions = Array.from(document.querySelectorAll(`input[name="q${currentQuestionIndex}"]:checked`))
+          .map(cb => cb.value);
+        userAnswers[currentQuestionIndex] = selectedOptions.length > 0 ? selectedOptions.sort() : null;
+      }
+    }
+
+    function restoreAnswer() {
+      const savedAnswer = userAnswers[currentQuestionIndex];
+      if (savedAnswer === null) return;
+
+      const inputs = document.querySelectorAll(`input[name="q${currentQuestionIndex}"]`);
+      inputs.forEach(input => {
+        if (Array.isArray(savedAnswer)) { // Multiple choice
+          if (savedAnswer.includes(input.value)) {
+            input.checked = true;
+            input.parentElement.classList.add('selected');
+          }
+        } else { // Single choice
+          if (input.value === savedAnswer) {
+            input.checked = true;
+            input.parentElement.classList.add('selected');
+          }
+        }
+      });
+    }
+
+    function updateProgress() {
+      progressText.textContent = `Câu ${currentQuestionIndex + 1} trên ${quizData.length}`;
+    }
+
+    function updateButtonVisibility() {
+      prevBtn.disabled = currentQuestionIndex === 0;
+      if (currentQuestionIndex === quizData.length - 1) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+    }
+
+    function showNextQuestion() {
+      if (currentQuestionIndex < quizData.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion();
+      }
+    }
+
+    function showPrevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        loadQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      quizContainer.classList.add('hidden');
+      resultContainer.classList.remove('hidden');
+      showResults();
+    }
+
+    function showResults() {
+      let score = 0;
+      const reviewArea = document.getElementById('review-area');
+      reviewArea.innerHTML = '';
+
+      quizData.forEach((question, index) => {
+        const userAnswer = userAnswers[index];
+        const correctAnswer = question.answer;
+        let isCorrect = false;
+
+        if (question.type === 'single') {
+          if (userAnswer === correctAnswer) {
+            isCorrect = true;
+          }
+        } else { // Multiple choice
+          const sortedUserAnswer = Array.isArray(userAnswer) ? userAnswer.slice().sort() : [];
+          const sortedCorrectAnswer = correctAnswer.slice().sort();
+          if (JSON.stringify(sortedUserAnswer) === JSON.stringify(sortedCorrectAnswer)) {
+            isCorrect = true;
+          }
+        }
+
+        if (isCorrect) score++;
+
+        const reviewBlock = document.createElement('div');
+        reviewBlock.className =
+          `p-4 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`;
+
+        let answerHtml = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${question.question}</p>
+                    <p class="mt-2 text-sm"><b>Bạn chọn:</b> ${userAnswer ? (Array.isArray(userAnswer) ? userAnswer.join(', ') : userAnswer) : 'Chưa trả lời'}</p>
+                    <p class="mt-1 text-sm"><b>Đáp án đúng:</b> ${Array.isArray(correctAnswer) ? correctAnswer.join(', ') : correctAnswer}</p>
+                `;
+        reviewBlock.innerHTML = answerHtml;
+        reviewArea.appendChild(reviewBlock);
+      });
+
+      const scoreText = document.getElementById('score-text');
+      scoreText.textContent = `Bạn đã trả lời đúng ${score} / ${quizData.length} câu!`;
+    }
+
+    function restartQuiz() {
+      currentQuestionIndex = 0;
+      userAnswers.fill(null);
+      resultContainer.classList.add('hidden');
+      quizContainer.classList.remove('hidden');
+      loadQuestion();
+    }
+
+    prevBtn.addEventListener('click', showPrevQuestion);
+    nextBtn.addEventListener('click', showNextQuestion);
+    submitBtn.addEventListener('click', submitQuiz);
+    restartBtn.addEventListener('click', restartQuiz);
+
+    // Initial load
+    window.onload = loadQuestion;
+  </script>
+</body>
+
+</html>

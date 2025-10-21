@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Trắc Nghiệm Mạng Máy Tính - Phần 2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .quiz-option.selected {
+      background-color: #3b82f6;
+      /* bg-blue-500 */
+      color: white;
+      border-color: #2563eb;
+      /* border-blue-700 */
+    }
+
+    .quiz-option:not(.selected):hover {
+      background-color: #dbeafe;
+      /* bg-blue-100 */
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+  <div id="quiz-container" class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto">
+    <div id="quiz-header" class="mb-6 border-b pb-4">
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Quiz Mạng Máy Tính - Chương 2</h1>
+      <p id="progress-text" class="text-sm text-slate-500 mt-2">Câu 1 trên 51</p>
+    </div>
+
+    <div id="question-area">
+      <h2 id="question-text" class="text-lg font-semibold text-slate-700 mb-5"></h2>
+      <div id="options-container" class="space-y-3">
+        <!-- Options will be dynamically inserted here -->
+      </div>
+    </div>
+
+    <div id="navigation-buttons" class="mt-8 flex justify-between items-center">
+      <button id="prev-btn"
+        class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-6 rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">Câu
+        Trước</button>
+      <button id="next-btn"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">Câu
+        Tiếp</button>
+      <button id="submit-btn"
+        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 hidden">Nộp
+        Bài</button>
+    </div>
+  </div>
+
+  <div id="result-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto hidden">
+    <h1 class="text-3xl font-bold text-slate-800 text-center">Kết Quả Bài Làm</h1>
+    <div id="score-text" class="text-center text-2xl font-semibold my-6 bg-blue-100 text-blue-800 p-4 rounded-lg"></div>
+    <div id="review-area" class="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+      <!-- Review questions will be here -->
+    </div>
+    <div class="text-center mt-8">
+      <button id="restart-btn"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300">Làm
+        Lại</button>
+    </div>
+  </div>
+
+
+  <script>
+    const quizData = [
+      // Tầng liên kết dữ liệu
+      {
+        question: "Một trong những chức năng của tầng liên kết dữ liệu là phát hiện lỗi.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Ethernet là một loại giao thức trong tầng liên kết dữ liệu.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "PDU được sử dụng ở tầng liên kết dữ liệu gọi là Bits.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Cấu trúc khung tầng liên kết dữ liệu có trường tiêu đề (header) và phần đuôi (trailer).",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Quá trình dữ liệu di chuyển từ tầng trên xuống tầng datalink phải thực hiện việc?",
+        options: ["Phân tích dữ liệu", "Lọc dữ liệu", "Nén dữ liệu", "Đóng gói dữ liệu"],
+        answer: "Đóng gói dữ liệu",
+        type: "single"
+      },
+      {
+        question: "Đơn vị dữ liệu tầng datalink là:",
+        options: ["Mbs", "Segment", "Frame", "Bits"],
+        answer: "Frame",
+        type: "single"
+      },
+      {
+        question: "Frame là dữ liệu ở tầng:",
+        options: ["Physical", "Network", "Data Link", "Transport"],
+        answer: "Data Link",
+        type: "single"
+      },
+      {
+        question: "Card mạng là thiết bị nằm ở tầng nào trong mô hình OSI:",
+        options: ["Physical", "Data Link", "Network", "Transport"],
+        answer: "Data Link",
+        type: "single"
+      },
+      {
+        question: "Tầng nào cung cấp dịch vụ truyền tin tin cậy qua môi trường vật lý:",
+        options: ["Physical", "Data link", "Network", "Transport"],
+        answer: "Data link",
+        type: "single"
+      },
+      {
+        question: "Dịch vụ nào sau đây mà tầng liên kết dữ liệu phải cung cấp? (Chọn 3)",
+        options: ["Tạo khung", "Xác định địa chỉ vật lý", "Kiểm soát lỗi", "Xác định địa chỉ logic"],
+        answer: ["Tạo khung", "Xác định địa chỉ vật lý", "Kiểm soát lỗi"],
+        type: "multiple"
+      },
+      {
+        question: "Các giao thức nào dưới đây nằm ở tầng liên kết dữ liệu? (Chọn 3)",
+        options: ["IP", "Ethernet", "Token ring", "PPP"],
+        answer: ["Ethernet", "Token ring", "PPP"],
+        type: "multiple"
+      },
+
+      // Công nghệ Ethernet
+      {
+        question: "CSMA/CD là giao thức truy cập ngẫu nhiên.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "NIC là viết tắt của Network Interface Card.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Mỗi NIC (Network Interface Card) có thể có nhiều địa chỉ MAC.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "LLC là một lớp con (sublayer) trong tầng liên kết dữ liệu.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Khi địa chỉ MAC đích là Broadcast, nó được dùng để gửi tới một địa chỉ đích duy nhất trong mạng LAN.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Câu nào đúng về địa chỉ MAC?",
+        options: ["Địa chỉ MAC được thực hiện bằng phần mềm.",
+          "NIC chỉ cần địa chỉ MAC nếu được kết nối với mạng WAN.",
+          "Ba bytes cuối trong địa chỉ MAC được gán bởi nhà sản xuất thiết bị.",
+          "ISO chịu trách nhiệm về các quy định về địa chỉ MAC."
+        ],
+        answer: "Ba bytes cuối trong địa chỉ MAC được gán bởi nhà sản xuất thiết bị.",
+        type: "single"
+      },
+      {
+        question: "Công nghệ Ethernet sử dụng phương pháp truy nhập đường truyền nào sau đây:",
+        options: ["CSMA", "ALOHA", "CSMA/CD", "TDMA"],
+        answer: "CSMA/CD",
+        type: "single"
+      },
+      {
+        question: "CSMA/CD là viết tắt của:",
+        options: ["Collision Sense Multiple Access / Collision Detection",
+          "Carrier Sense Multiple Access / Carrier Detection",
+          "Carrier Sense Multiple Access / Collision Detection",
+          "Collision Sense Multiple Access / Carrier Detection"
+        ],
+        answer: "Carrier Sense Multiple Access / Collision Detection",
+        type: "single"
+      },
+      {
+        question: "Chuỗi số “00-08-ac-41-5d-9f có thể là:",
+        options: ["Địa chỉ IP", "Địa chỉ port", "Địa chỉ MAC", "Địa chỉ dịch vụ"],
+        answer: "Địa chỉ MAC",
+        type: "single"
+      },
+      {
+        question: "Chuẩn nào dưới đây đặc tả về chuẩn kiến trúc mạng cục bộ cho Ethernet, bao gồm các chuẩn tầng vật lý và tầng con MAC:",
+        options: ["IEEE 802.2", "IEEE 802.3", "Token Bus", "Token Ring"],
+        answer: "IEEE 802.3",
+        type: "single"
+      },
+      {
+        question: "Chọn phát biểu ĐÚNG về địa chỉ MAC:",
+        options: ["Được gắn trên card mạng (NIC)", "Do người quản trị mạng khai báo",
+          "Được gán trong quá trình thiết bị khởi động", "Được gán trong quá trình thiết bị truyền thông tin"
+        ],
+        answer: "Được gắn trên card mạng (NIC)",
+        type: "single"
+      },
+      {
+        question: "Công nghệ nào dưới đây được sử dụng phổ biến nhất trong mạng LAN hiện nay:",
+        options: ["Token Ring", "FDDI", "Ethernet", "ADSL"],
+        answer: "Ethernet",
+        type: "single"
+      },
+      {
+        question: "LLC là viết tắt của:",
+        options: ["Logical Link Control", "Link Logical Control", "Logical Link Computer", "Lan Logical Control"],
+        answer: "Logical Link Control",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ MAC nào có dưới đây KHÔNG trong tiêu đề của Frame? (Chọn 3)",
+        options: ["MAC sources", "MAC Gateway", "MAC destination", "MAC Default"],
+        answer: ["MAC sources", "MAC Gateway", "MAC Default"],
+        type: "multiple"
+      },
+      {
+        question: "Các loại địa chỉ MAC bao gồm? (Chọn 3)",
+        options: ["MAC unicast", "MAC multicast", "MAC broadcast", "MAC anycast"],
+        answer: ["MAC unicast", "MAC multicast", "MAC broadcast"],
+        type: "multiple"
+      },
+
+      // Thiết bị chuyển mạch Ethernet
+      {
+        question: "Tốc độ của GigabitEthernet có thể lên đến 10000Mbps?",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Thiết bị chuyển mạch lớp 2 hoạt động kém hiệu quả hơn so với Hub?",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "Mac Address Table được lưu trữ trong RAM của Switch?",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Một thiết bị chuyển mạch lớp 2 có thể hỗ trợ các loại cổng:",
+        options: ["Cổng dynamic và Well-known", "Công access và Well-known", "Cổng trunk và Well-known",
+          "Cổng access và trunk"
+        ],
+        answer: "Cổng access và trunk",
+        type: "single"
+      },
+      {
+        question: "Thiết bị Switch thông thường nằm ở tầng nào của mô hình OSI?",
+        options: ["Tầng 1", "Tầng 2", "Tầng 3", "Tầng 4"],
+        answer: "Tầng 2",
+        type: "single"
+      },
+      {
+        question: "Để hạn chế sự đụng độ (hay va chạm) giữa các gói tin trong mạng người ta sử dụng thiết bị nào dưới đây?",
+        options: ["Repeaters", "Hubs", "Switches", "Card mạng (NIC)"],
+        answer: "Switches",
+        type: "single"
+      },
+      {
+        question: "Địa chỉ nào được quan tâm khi một frame đi vào cổng của Switch?",
+        options: ["Địa chỉ IP nguồn", "Địa chỉ MAC nguồn", "Địa chỉ IP đích", "Địa chỉ MAC đích"],
+        answer: "Địa chỉ MAC nguồn",
+        type: "single"
+      },
+      {
+        question: "Các thiết bị nào dưới đây không được sử dụng để hạn chế sự đụng độ của các gói tin trong mạng? (Chọn 3)",
+        options: ["Repeaters", "Hubs", "Card mạng (NIC)", "Switches"],
+        answer: ["Repeaters", "Hubs"],
+        type: "multiple"
+      },
+      {
+        question: "Một miền quảng bá có tính chất như sau (Chọn 3)",
+        options: ["Phạm vi truy cập của các gói Broadcast",
+          "Các thiết bị trong cùng một miền quảng bá có thể nhận gói quảng bá",
+          "Bộ định tuyến phân tách các miền quảng bá bằng interface",
+          "Bộ định tuyến không phân tách được miền quảng bá"
+        ],
+        answer: ["Phạm vi truy cập của các gói Broadcast",
+          "Các thiết bị trong cùng một miền quảng bá có thể nhận gói quảng bá",
+          "Bộ định tuyến phân tách các miền quảng bá bằng interface"
+        ],
+        type: "multiple"
+      },
+      {
+        question: "Các cách xử lý frame khi đi vào giao diện trên Switch? (Chọn 3)",
+        options: ["Flooding", "Saving", "Forwarding", "Discarding"],
+        answer: ["Flooding", "Forwarding", "Discarding"],
+        type: "multiple"
+      },
+      {
+        question: "Các chức năng đặc thù của thiết bị chuyển mạch lớp 2? (Chọn 3)",
+        options: ["Xoá bỏ dữ liệu lỗi", "Học địa chỉ", "Quyết định chuyển tiếp/lọc khung", "Tránh Loop"],
+        answer: ["Học địa chỉ", "Quyết định chuyển tiếp/lọc khung", "Tránh Loop"],
+        type: "multiple"
+      },
+      {
+        question: "Các loại cổng Ethernet nào dưới đây dùng để truyền dữ liệu trong mạng LAN? (Chọn 3)",
+        options: ["FastEthernet", "GigabitEthernet", "Ten Gigabit Ethernet", "Console Ethernet"],
+        answer: ["FastEthernet", "GigabitEthernet", "Ten Gigabit Ethernet"],
+        type: "multiple"
+      },
+
+      // VLAN và Trunking
+      {
+        question: "VLAN là một mạng LAN ảo.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Dữ liệu ở VLAN gốc không được trao đổi qua kết nối Trunking.",
+        options: ["Đúng", "Sai"],
+        answer: "Sai",
+        type: "single"
+      },
+      {
+        question: "IEEE 802.1Q có tên gọi khác là dot1Q.",
+        options: ["Đúng", "Sai"],
+        answer: "Đúng",
+        type: "single"
+      },
+      {
+        question: "Thiết bị Hub có bao nhiêu collision domain?",
+        options: ["1", "2", "3", "4"],
+        answer: "1",
+        type: "single"
+      },
+      {
+        question: "Thiết bị Switch có bao nhiêu collision domain?",
+        options: ["3 collisions / 1 port", "2 collisions/1port", "1 collision / 1port", "4 collisions / 1 port"],
+        answer: "1 collision / 1port",
+        type: "single"
+      },
+      {
+        question: "Thiết bị Switch (cấu hình mặc định) có bao nhiêu Broadcast domain?",
+        options: ["1", "2", "3", "4"],
+        answer: "1",
+        type: "single"
+      },
+      {
+        question: "Thiết bị Hub có bao nhiêu Broadcast domain?",
+        options: ["1", "2", "3", "4"],
+        answer: "1",
+        type: "single"
+      },
+      {
+        question: "Virtual LAN (VLAN) là một nhóm các thiết bị kết nối trong cùng miền nào dưới đây?",
+        options: ["Miền tự trị", "Miền quảng bá", "Miền vật lý", "Miền va chạm"],
+        answer: "Miền quảng bá",
+        type: "single"
+      },
+      {
+        question: "Một mạng chứa nhiều VLAN trải rộng trên nhiều thiết bị chuyển mạch (trong các VLAN có VLAN 20). Điều gì xảy ra khi một thiết bị trong VLAN 20 gửi khung Ethernet quảng bá?",
+        options: ["Các thiết bị trong các VLAN đều nhìn thấy frame.",
+          "Các thiết bị trong VLAN 20 và VLAN quản lý sẽ nhìn thấy frame.",
+          "Chỉ các thiết bị trong VLAN 20 mới nhìn thấy frame.",
+          "Chỉ những thiết bị được kết nối với bộ chuyển mạch cục bộ mới nhìn thấy frame."
+        ],
+        answer: "Chỉ các thiết bị trong VLAN 20 mới nhìn thấy frame.",
+        type: "single"
+      },
+      {
+        question: "Trong Switch Cisco, VLAN mặc định là:",
+        options: ["VLAN 1", "VLAN 2", "VLAN 3", "VLAN 4"],
+        answer: "VLAN 1",
+        type: "single"
+      },
+      {
+        question: "Lợi ích của việc sử dụng VLAN là gì? (Chọn 3)",
+        options: ["Tăng cường bảo mật", "Giảm chi phí, tăng hiệu suất", "Dễ quản lý",
+          "Giảm độ trễ xử lý frame và bits"
+        ],
+        answer: ["Tăng cường bảo mật", "Giảm chi phí, tăng hiệu suất", "Dễ quản lý"],
+        type: "multiple"
+      },
+      {
+        question: "Các dãy giá trị nào dưới đây thoả mãn là VLAN-ID? (Chọn 3)",
+        options: ["1-1001", "1002-1005", "1006-4094", "4095-5095"],
+        answer: ["1-1001", "1002-1005", "1006-4094"],
+        type: "multiple"
+      },
+      {
+        question: "Phát biểu nào sau đây là SAI: khi Switch nhận được một frame gửi tới nó, Switch sẽ xử lý như thế nào nếu địa chỉ MAC đích trong frame không có trong bảng địa chỉ MAC của nó? (Chọn 3)",
+        options: ["Switch sẽ chuyển frame đến địa chỉ default gateway", "Switch sẽ chuyển frame đến cổng gần nhất",
+          "Switch sẽ hủy bỏ frame này",
+          "Switch sẽ chuyển tiếp frame đến các cổng của Switch trừ cổng nhận frame vào"
+        ],
+        answer: ["Switch sẽ chuyển frame đến địa chỉ default gateway", "Switch sẽ chuyển frame đến cổng gần nhất",
+          "Switch sẽ hủy bỏ frame này"
+        ],
+        type: "multiple"
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+
+    const quizContainer = document.getElementById('quiz-container');
+    const resultContainer = document.getElementById('result-container');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const progressText = document.getElementById('progress-text');
+
+    function loadQuestion() {
+      const currentQuestion = quizData[currentQuestionIndex];
+      questionText.textContent = `Câu ${currentQuestionIndex + 1}: ${currentQuestion.question}`;
+      optionsContainer.innerHTML = '';
+
+      const inputType = currentQuestion.type === 'single' ? 'radio' : 'checkbox';
+
+      currentQuestion.options.forEach((option, index) => {
+        const optionId = `q${currentQuestionIndex}-option${index}`;
+        const optionWrapper = document.createElement('div');
+        optionWrapper.classList.add('quiz-option', 'p-4', 'border', 'rounded-lg', 'cursor-pointer',
+          'transition-colors', 'duration-200');
+
+        const input = document.createElement('input');
+        input.type = inputType;
+        input.id = optionId;
+        input.name = `q${currentQuestionIndex}`;
+        input.value = option;
+        input.className = "hidden";
+
+        const label = document.createElement('label');
+        label.htmlFor = optionId;
+        label.textContent = option;
+        label.className = "block w-full cursor-pointer";
+
+        optionWrapper.appendChild(input);
+        optionWrapper.appendChild(label);
+        optionsContainer.appendChild(optionWrapper);
+
+        optionWrapper.addEventListener('click', () => handleOptionSelect(optionWrapper, input));
+      });
+
+      restoreAnswer();
+      updateProgress();
+      updateButtonVisibility();
+    }
+
+    function handleOptionSelect(wrapper, input) {
+      const currentQuestion = quizData[currentQuestionIndex];
+      if (currentQuestion.type === 'single') {
+        // Deselect all options in the current question first
+        wrapper.parentElement.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+        // Select the clicked one
+        wrapper.classList.add('selected');
+        input.checked = true;
+      } else {
+        // For multiple choice, just toggle
+        wrapper.classList.toggle('selected');
+        input.checked = wrapper.classList.contains('selected');
+      }
+      saveAnswer();
+    }
+
+    function saveAnswer() {
+      const currentQuestion = quizData[currentQuestionIndex];
+      if (currentQuestion.type === 'single') {
+        const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+        userAnswers[currentQuestionIndex] = selectedOption ? selectedOption.value : null;
+      } else {
+        const selectedOptions = Array.from(document.querySelectorAll(`input[name="q${currentQuestionIndex}"]:checked`))
+          .map(cb => cb.value);
+        userAnswers[currentQuestionIndex] = selectedOptions.length > 0 ? selectedOptions.sort() : null;
+      }
+    }
+
+    function restoreAnswer() {
+      const savedAnswer = userAnswers[currentQuestionIndex];
+      if (savedAnswer === null) return;
+
+      const inputs = document.querySelectorAll(`input[name="q${currentQuestionIndex}"]`);
+      inputs.forEach(input => {
+        if (Array.isArray(savedAnswer)) { // Multiple choice
+          if (savedAnswer.includes(input.value)) {
+            input.checked = true;
+            input.parentElement.classList.add('selected');
+          }
+        } else { // Single choice
+          if (input.value === savedAnswer) {
+            input.checked = true;
+            input.parentElement.classList.add('selected');
+          }
+        }
+      });
+    }
+
+    function updateProgress() {
+      progressText.textContent = `Câu ${currentQuestionIndex + 1} trên ${quizData.length}`;
+    }
+
+    function updateButtonVisibility() {
+      prevBtn.disabled = currentQuestionIndex === 0;
+      if (currentQuestionIndex === quizData.length - 1) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+    }
+
+    function showNextQuestion() {
+      if (currentQuestionIndex < quizData.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion();
+      }
+    }
+
+    function showPrevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        loadQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      quizContainer.classList.add('hidden');
+      resultContainer.classList.remove('hidden');
+      showResults();
+    }
+
+    function showResults() {
+      let score = 0;
+      const reviewArea = document.getElementById('review-area');
+      reviewArea.innerHTML = '';
+
+      quizData.forEach((question, index) => {
+        const userAnswer = userAnswers[index];
+        const correctAnswer = question.answer;
+        let isCorrect = false;
+
+        if (question.type === 'single') {
+          if (userAnswer === correctAnswer) {
+            isCorrect = true;
+          }
+        } else { // Multiple choice
+          const sortedUserAnswer = Array.isArray(userAnswer) ? userAnswer.slice().sort() : [];
+          const sortedCorrectAnswer = correctAnswer.slice().sort();
+          if (JSON.stringify(sortedUserAnswer) === JSON.stringify(sortedCorrectAnswer)) {
+            isCorrect = true;
+          }
+        }
+
+        if (isCorrect) score++;
+
+        const reviewBlock = document.createElement('div');
+        reviewBlock.className =
+          `p-4 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`;
+
+        let answerHtml = `
+                    <p class="font-bold text-slate-800">${index + 1}. ${question.question}</p>
+                    <p class="mt-2 text-sm"><b>Bạn chọn:</b> ${userAnswer ? (Array.isArray(userAnswer) ? userAnswer.join(', ') : userAnswer) : 'Chưa trả lời'}</p>
+                    <p class="mt-1 text-sm"><b>Đáp án đúng:</b> ${Array.isArray(correctAnswer) ? correctAnswer.join(', ') : correctAnswer}</p>
+                `;
+        reviewBlock.innerHTML = answerHtml;
+        reviewArea.appendChild(reviewBlock);
+      });
+
+      const scoreText = document.getElementById('score-text');
+      scoreText.textContent = `Bạn đã trả lời đúng ${score} / ${quizData.length} câu!`;
+    }
+
+    function restartQuiz() {
+      currentQuestionIndex = 0;
+      userAnswers.fill(null);
+      resultContainer.classList.add('hidden');
+      quizContainer.classList.remove('hidden');
+      loadQuestion();
+    }
+
+    prevBtn.addEventListener('click', showPrevQuestion);
+    nextBtn.addEventListener('click', showNextQuestion);
+    submitBtn.addEventListener('click', submitQuiz);
+    restartBtn.addEventListener('click', restartQuiz);
+
+    // Initial load
+    window.onload = loadQuestion;
+  </script>
+</body>
+
+</html>
