@@ -78,7 +78,7 @@
 
   <script>
     // Dữ liệu 18 câu hỏi SQL Server Security
-    const quizData = [
+    const originalQuizData = [
       {
         question: "Khi bạn tạo user trong một database mà không chỉ định login, điều gì xảy ra?",
         options: ["User sẽ là contained database user", "User không thể đăng nhập vào database", "SQL Server tự động tạo login trùng tên", "SQL Server báo lỗi ngay lập tức"],
@@ -171,9 +171,9 @@
       }
     ];
 
+    let quizData = [];
     let currentQuestionIndex = 0;
-    // Mảng lưu câu trả lời, vì là single choice nên chỉ cần lưu string hoặc null
-    let userAnswers = new Array(quizData.length).fill(null);
+    let userAnswers = [];
 
     const quizContainer = document.getElementById('quiz-container');
     const resultContainer = document.getElementById('result-container');
@@ -184,6 +184,29 @@
     const submitBtn = document.getElementById('submit-btn');
     const restartBtn = document.getElementById('restart-btn');
     const progressText = document.getElementById('progress-text');
+
+    // Hàm trộn mảng (Fisher-Yates Shuffle)
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // Hàm khởi tạo bài thi (trộn đề và reset biến)
+    function initQuiz() {
+      // Copy mảng gốc để không làm hỏng dữ liệu gốc, sau đó trộn
+      quizData = shuffleArray([...originalQuizData]);
+      currentQuestionIndex = 0;
+      userAnswers = new Array(quizData.length).fill(null);
+      
+      // Hiển thị giao diện quiz, ẩn kết quả
+      quizContainer.classList.remove('hidden');
+      resultContainer.classList.add('hidden');
+      
+      loadQuestion();
+    }
 
     function loadQuestion() {
       const currentQuestion = quizData[currentQuestionIndex];
@@ -196,11 +219,11 @@
         optionWrapper.classList.add('quiz-option', 'p-4', 'border', 'rounded-lg', 'cursor-pointer', 'transition-colors', 'duration-200', 'noselect');
 
         const input = document.createElement('input');
-        input.type = 'radio'; // Luôn là radio button
+        input.type = 'radio';
         input.id = optionId;
         input.name = `q${currentQuestionIndex}`;
         input.value = option;
-        input.className = "hidden"; // Ẩn nút radio mặc định đi để style div
+        input.className = "hidden";
 
         const label = document.createElement('label');
         label.htmlFor = optionId;
@@ -211,7 +234,6 @@
         optionWrapper.appendChild(label);
         optionsContainer.appendChild(optionWrapper);
 
-        // Click vào vùng div cũng chọn
         optionWrapper.addEventListener('click', () => handleOptionSelect(optionWrapper, input));
       });
 
@@ -221,7 +243,6 @@
     }
 
     function handleOptionSelect(wrapper, input) {
-      // Xóa class selected ở tất cả các option khác
       const allOptions = optionsContainer.querySelectorAll('.quiz-option');
       allOptions.forEach(opt => {
         opt.classList.remove('selected');
@@ -229,11 +250,8 @@
         inp.checked = false;
       });
 
-      // Thêm class selected vào option được chọn
       wrapper.classList.add('selected');
       input.checked = true;
-
-      // Lưu đáp án
       saveAnswer();
     }
 
@@ -299,7 +317,6 @@
         const userAnswer = userAnswers[index];
         let isCorrect = false;
 
-        // So sánh trực tiếp chuỗi vì chỉ có 1 đáp án đúng
         if (userAnswer === question.answer) {
           isCorrect = true;
           score++;
@@ -323,11 +340,7 @@
     }
 
     function restartQuiz() {
-      currentQuestionIndex = 0;
-      userAnswers.fill(null);
-      resultContainer.classList.add('hidden');
-      quizContainer.classList.remove('hidden');
-      loadQuestion();
+      initQuiz(); // Trộn lại đề và bắt đầu lại
     }
 
     prevBtn.addEventListener('click', showPrevQuestion);
@@ -335,8 +348,8 @@
     submitBtn.addEventListener('click', submitQuiz);
     restartBtn.addEventListener('click', restartQuiz);
 
-    // Initial load
-    window.onload = loadQuestion;
+    // Bắt đầu quiz khi tải trang
+    window.onload = initQuiz;
   </script>
 </body>
 

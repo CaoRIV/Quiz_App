@@ -78,7 +78,7 @@
 
   <script>
     // Dữ liệu 20 câu hỏi về SQL Server Views (Đã sắp xếp theo thứ tự câu 1-20)
-    const quizData = [
+    const originalQuizData = [
       {
         question: "Một view phức tạp với nhiều JOIN, GROUP BY, subquery có thể:",
         options: ["B và C đúng", "Chỉ SELECT được, không thể UPDATE hoặc DELETE", "Không thể cập nhật dữ liệu", "Luôn cập nhật dữ liệu trực tiếp"],
@@ -181,8 +181,9 @@
       }
     ];
 
+   let quizData = [];
     let currentQuestionIndex = 0;
-    let userAnswers = new Array(quizData.length).fill(null);
+    let userAnswers = [];
 
     const quizContainer = document.getElementById('quiz-container');
     const resultContainer = document.getElementById('result-container');
@@ -193,6 +194,29 @@
     const submitBtn = document.getElementById('submit-btn');
     const restartBtn = document.getElementById('restart-btn');
     const progressText = document.getElementById('progress-text');
+
+    // Hàm trộn mảng (Fisher-Yates Shuffle)
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // Hàm khởi tạo bài thi (trộn đề và reset biến)
+    function initQuiz() {
+      // Copy mảng gốc để không làm hỏng dữ liệu gốc, sau đó trộn
+      quizData = shuffleArray([...originalQuizData]);
+      currentQuestionIndex = 0;
+      userAnswers = new Array(quizData.length).fill(null);
+      
+      // Hiển thị giao diện quiz, ẩn kết quả
+      quizContainer.classList.remove('hidden');
+      resultContainer.classList.add('hidden');
+      
+      loadQuestion();
+    }
 
     function loadQuestion() {
       const currentQuestion = quizData[currentQuestionIndex];
@@ -326,11 +350,7 @@
     }
 
     function restartQuiz() {
-      currentQuestionIndex = 0;
-      userAnswers.fill(null);
-      resultContainer.classList.add('hidden');
-      quizContainer.classList.remove('hidden');
-      loadQuestion();
+      initQuiz(); // Trộn lại đề và bắt đầu lại
     }
 
     prevBtn.addEventListener('click', showPrevQuestion);
@@ -338,7 +358,8 @@
     submitBtn.addEventListener('click', submitQuiz);
     restartBtn.addEventListener('click', restartQuiz);
 
-    window.onload = loadQuestion;
+    // Bắt đầu quiz khi tải trang
+    window.onload = initQuiz;
   </script>
 </body>
 
