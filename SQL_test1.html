@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz SQL Server Security</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .quiz-option.selected {
+      background-color: #3b82f6; /* bg-blue-500 */
+      color: white;
+      border-color: #2563eb; /* border-blue-700 */
+    }
+
+    .quiz-option:hover {
+      background-color: #dbeafe; /* bg-blue-100 */
+    }
+    
+    /* Ngăn chặn user bôi đen text để trải nghiệm giống app hơn */
+    .noselect {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+  <div id="quiz-container" class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto">
+    <div id="quiz-header" class="mb-6 border-b pb-4">
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Quiz: Test1 - He Quan Tri Co So Du Lieu</h1>
+      <p id="progress-text" class="text-sm text-slate-500 mt-2">Câu 1 trên 18</p>
+    </div>
+
+    <div id="question-area">
+      <h2 id="question-text" class="text-lg font-semibold text-slate-700 mb-5 leading-relaxed"></h2>
+      <div id="options-container" class="space-y-3">
+        </div>
+    </div>
+
+    <div id="navigation-buttons" class="mt-8 flex justify-between items-center">
+      <button id="prev-btn"
+        class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-6 rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+        Câu Trước
+      </button>
+      <button id="next-btn"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">
+        Câu Tiếp
+      </button>
+      <button id="submit-btn"
+        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 hidden">
+        Nộp Bài
+      </button>
+    </div>
+  </div>
+
+  <div id="result-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto hidden">
+    <h1 class="text-3xl font-bold text-slate-800 text-center">Kết Quả Bài Làm</h1>
+    <div id="score-text" class="text-center text-2xl font-semibold my-6 bg-blue-100 text-blue-800 p-4 rounded-lg"></div>
+    <div id="review-area" class="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+      </div>
+    <div class="text-center mt-8">
+      <button id="restart-btn"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300">
+        Làm Lại
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Dữ liệu 18 câu hỏi SQL Server Security
+    const quizData = [
+      {
+        question: "Khi bạn tạo user trong một database mà không chỉ định login, điều gì xảy ra?",
+        options: ["User sẽ là contained database user", "User không thể đăng nhập vào database", "SQL Server tự động tạo login trùng tên", "SQL Server báo lỗi ngay lập tức"],
+        answer: "SQL Server báo lỗi ngay lập tức"
+      },
+      {
+        question: "Tình huống: Tạo login A, B, C. Tạo user userA, userB, userC tương ứng. Gán quyền SELECT, UPDATE cho userA. Từ B, Trao quyền SELECT cho userC trên bảng NhaCungCap. Đăng nhập C để kiểm tra. Kết quả là?",
+        options: ["Đúng", "Sai"],
+        answer: "Sai"
+      },
+      {
+        question: "Để xóa một user ra khỏi database mà không ảnh hưởng login, dùng lệnh:",
+        options: ["ALTER LOGIN user_name DISABLE", "DROP LOGIN user_name", "REVOKE CONNECT FROM user_name", "DROP USER user_name"],
+        answer: "DROP USER user_name"
+      },
+      {
+        question: "Để kiểm tra user hiện tại đang đăng nhập bằng login nào trong database, dùng:",
+        options: ["SELECT SUSER_SNAME()", "SELECT USER_NAME()", "SELECT CURRENT_USER()", "Cả A và B đúng trong phạm vi khác nhau"],
+        answer: "Cả A và B đúng trong phạm vi khác nhau"
+      },
+      {
+        question: "Lệnh nào được dùng để tạo login SQL Server dùng xác thực SQL?",
+        options: ["GRANT LOGIN ...", "CREATE LOGIN ... WITH PASSWORD = '...'", "CREATE ROLE ...", "CREATE USER ..."],
+        answer: "CREATE LOGIN ... WITH PASSWORD = '...'"
+      },
+      {
+        question: "Để cho phép một người dùng truy cập một cơ sở dữ liệu cụ thể, bạn cần:",
+        options: ["Chỉ cấp quyền SELECT cho bảng", "Tạo login và ánh xạ với user trong database", "Chỉ tạo user", "Chỉ tạo login"],
+        answer: "Tạo login và ánh xạ với user trong database"
+      },
+      {
+        question: "Quyền DENY có độ ưu tiên thế nào so với GRANT?",
+        options: ["Tùy thuộc vào vai trò", "Cả hai ngang nhau, quyền mới nhất ghi đè", "GRANT cao hơn DENY", "DENY cao hơn GRANT"],
+        answer: "DENY cao hơn GRANT"
+      },
+      {
+        question: "Lệnh nào dùng để gán user vào một database role có sẵn?",
+        options: ["GRANT ROLE ... TO ...", "EXEC sp_addlogin ...", "CREATE ROLE ... WITH ...", "ALTER ROLE ... ADD MEMBER ..."],
+        answer: "ALTER ROLE ... ADD MEMBER ..."
+      },
+      {
+        question: "Nếu bạn REVOKE một quyền từ user, điều gì xảy ra?",
+        options: ["Quyền đó bị thu hồi hoàn toàn", "Quyền đó bị xóa, nhưng user có thể nhận lại từ vai trò khác", "SQL Server sẽ vô hiệu hóa login", "Không có tác dụng nếu quyền chưa được cấp"],
+        answer: "Quyền đó bị xóa, nhưng user có thể nhận lại từ vai trò khác"
+      },
+      {
+        question: "Lệnh nào được dùng để tạo login SQL Server dùng xác thực SQL? (Câu lặp lại)",
+        options: ["CREATE ROLE ...", "GRANT LOGIN ...", "CREATE USER ...", "CREATE LOGIN ... WITH PASSWORD = '...'"],
+        answer: "CREATE LOGIN ... WITH PASSWORD = '...'"
+      },
+      {
+        question: "Lệnh nào được dùng để thay đổi mật khẩu cho một login?",
+        options: ["ALTER USER ... WITH PASSWORD = '...'", "sp_password ...", "ALTER LOGIN ... WITH PASSWORD = '...'", "GRANT PASSWORD ... TO ..."],
+        answer: "ALTER LOGIN ... WITH PASSWORD = '...'"
+      },
+      {
+        question: "Khi một login được ánh xạ đến nhiều database, nó sẽ:",
+        options: ["Có user riêng biệt trong mỗi database", "Dùng cùng một user_id ở tất cả database", "Không thể đăng nhập nhiều database cùng lúc", "Bị giới hạn quyền SELECT mặc định"],
+        answer: "Có user riêng biệt trong mỗi database"
+      },
+      {
+        question: "Trong SQL Server, login được tạo ở cấp độ nào?",
+        options: ["Database", "Table", "Server", "Schema"],
+        answer: "Server"
+      },
+      {
+        question: "Khi bạn tạo user trong một database mà không chỉ định tên user, điều gì xảy ra?",
+        options: ["SQL Server tự động tạo user trùng tên", "User sẽ là contained database user", "User không thể đăng nhập vào database", "SQL Server báo lỗi ngay lập tức"],
+        answer: "SQL Server tự động tạo user trùng tên"
+      },
+      {
+        question: "Lệnh nào dùng để vô hiệu hóa một login SQL Server?",
+        options: ["DENY CONNECT SQL TO ...", "DROP LOGIN ...", "REVOKE LOGIN ...", "ALTER LOGIN ... DISABLE"],
+        answer: "ALTER LOGIN ... DISABLE"
+      },
+      {
+        question: "Muốn xóa một login nhưng login này đang được dùng trong database, bạn phải:",
+        options: ["Dùng DROP LOGIN trực tiếp", "Vô hiệu hóa login rồi xóa", "Xóa tất cả user được ánh xạ trong database trước", "Dùng REVOKE CONNECT trước"],
+        answer: "Xóa tất cả user được ánh xạ trong database trước"
+      },
+      {
+        question: "Nếu muốn cấp quyền SELECT cho một user trên bảng Customers, bạn dùng lệnh:",
+        options: ["GRANT SELECT ON Customers TO user_name", "CREATE ROLE ... WITH SELECT", "EXEC sp_addrolemember 'SELECT', user_name", "ALTER USER ... ADD SELECT ON Customers"],
+        answer: "GRANT SELECT ON Customers TO user_name"
+      },
+      {
+        question: "Khi một login được ánh xạ đến nhiều database, nó sẽ: (Câu lặp lại)",
+        options: ["Có user riêng biệt trong mỗi database", "Không thể đăng nhập nhiều database cùng lúc", "Dùng cùng một user_id ở tất cả database", "Bị giới hạn quyền SELECT mặc định"],
+        answer: "Có user riêng biệt trong mỗi database"
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    // Mảng lưu câu trả lời, vì là single choice nên chỉ cần lưu string hoặc null
+    let userAnswers = new Array(quizData.length).fill(null);
+
+    const quizContainer = document.getElementById('quiz-container');
+    const resultContainer = document.getElementById('result-container');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const progressText = document.getElementById('progress-text');
+
+    function loadQuestion() {
+      const currentQuestion = quizData[currentQuestionIndex];
+      questionText.textContent = `Câu ${currentQuestionIndex + 1}: ${currentQuestion.question}`;
+      optionsContainer.innerHTML = '';
+
+      currentQuestion.options.forEach((option, index) => {
+        const optionId = `q${currentQuestionIndex}-option${index}`;
+        const optionWrapper = document.createElement('div');
+        optionWrapper.classList.add('quiz-option', 'p-4', 'border', 'rounded-lg', 'cursor-pointer', 'transition-colors', 'duration-200', 'noselect');
+
+        const input = document.createElement('input');
+        input.type = 'radio'; // Luôn là radio button
+        input.id = optionId;
+        input.name = `q${currentQuestionIndex}`;
+        input.value = option;
+        input.className = "hidden"; // Ẩn nút radio mặc định đi để style div
+
+        const label = document.createElement('label');
+        label.htmlFor = optionId;
+        label.textContent = option;
+        label.className = "block w-full cursor-pointer";
+
+        optionWrapper.appendChild(input);
+        optionWrapper.appendChild(label);
+        optionsContainer.appendChild(optionWrapper);
+
+        // Click vào vùng div cũng chọn
+        optionWrapper.addEventListener('click', () => handleOptionSelect(optionWrapper, input));
+      });
+
+      restoreAnswer();
+      updateProgress();
+      updateButtonVisibility();
+    }
+
+    function handleOptionSelect(wrapper, input) {
+      // Xóa class selected ở tất cả các option khác
+      const allOptions = optionsContainer.querySelectorAll('.quiz-option');
+      allOptions.forEach(opt => {
+        opt.classList.remove('selected');
+        const inp = opt.querySelector('input');
+        inp.checked = false;
+      });
+
+      // Thêm class selected vào option được chọn
+      wrapper.classList.add('selected');
+      input.checked = true;
+
+      // Lưu đáp án
+      saveAnswer();
+    }
+
+    function saveAnswer() {
+      const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+      userAnswers[currentQuestionIndex] = selectedOption ? selectedOption.value : null;
+    }
+
+    function restoreAnswer() {
+      const savedAnswer = userAnswers[currentQuestionIndex];
+      if (savedAnswer === null) return;
+
+      const inputs = document.querySelectorAll(`input[name="q${currentQuestionIndex}"]`);
+      inputs.forEach(input => {
+        if (input.value === savedAnswer) {
+          input.checked = true;
+          input.parentElement.classList.add('selected');
+        }
+      });
+    }
+
+    function updateProgress() {
+      progressText.textContent = `Câu ${currentQuestionIndex + 1} trên ${quizData.length}`;
+    }
+
+    function updateButtonVisibility() {
+      prevBtn.disabled = currentQuestionIndex === 0;
+      if (currentQuestionIndex === quizData.length - 1) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+    }
+
+    function showNextQuestion() {
+      if (currentQuestionIndex < quizData.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion();
+      }
+    }
+
+    function showPrevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        loadQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      quizContainer.classList.add('hidden');
+      resultContainer.classList.remove('hidden');
+      showResults();
+    }
+
+    function showResults() {
+      let score = 0;
+      const reviewArea = document.getElementById('review-area');
+      reviewArea.innerHTML = '';
+
+      quizData.forEach((question, index) => {
+        const userAnswer = userAnswers[index];
+        let isCorrect = false;
+
+        // So sánh trực tiếp chuỗi vì chỉ có 1 đáp án đúng
+        if (userAnswer === question.answer) {
+          isCorrect = true;
+          score++;
+        }
+
+        const reviewBlock = document.createElement('div');
+        reviewBlock.className = `p-4 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`;
+
+        let answerHtml = `
+            <p class="font-bold text-slate-800">${index + 1}. ${question.question}</p>
+            <p class="mt-2 text-sm"><b>Bạn chọn:</b> ${userAnswer ? userAnswer : '<span class="text-red-500">Chưa trả lời</span>'}</p>
+            <p class="mt-1 text-sm ${isCorrect ? 'text-green-700' : 'text-red-700'}"><b>Đáp án đúng:</b> ${question.answer}</p>
+        `;
+        reviewBlock.innerHTML = answerHtml;
+        reviewArea.appendChild(reviewBlock);
+      });
+
+      const scoreText = document.getElementById('score-text');
+      const percentage = Math.round((score / quizData.length) * 100);
+      scoreText.innerHTML = `Bạn đã trả lời đúng <span class="font-bold text-2xl">${score}</span> / ${quizData.length} câu!<br><span class="text-sm text-blue-600">(${percentage}%)</span>`;
+    }
+
+    function restartQuiz() {
+      currentQuestionIndex = 0;
+      userAnswers.fill(null);
+      resultContainer.classList.add('hidden');
+      quizContainer.classList.remove('hidden');
+      loadQuestion();
+    }
+
+    prevBtn.addEventListener('click', showPrevQuestion);
+    nextBtn.addEventListener('click', showNextQuestion);
+    submitBtn.addEventListener('click', submitQuiz);
+    restartBtn.addEventListener('click', restartQuiz);
+
+    // Initial load
+    window.onload = loadQuestion;
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz SQL Server Views</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .quiz-option.selected {
+      background-color: #3b82f6; /* bg-blue-500 */
+      color: white;
+      border-color: #2563eb; /* border-blue-700 */
+    }
+
+    .quiz-option:hover {
+      background-color: #dbeafe; /* bg-blue-100 */
+    }
+    
+    /* Ngăn chặn user bôi đen text để trải nghiệm giống app hơn */
+    .noselect {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+  <div id="quiz-container" class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto">
+    <div id="quiz-header" class="mb-6 border-b pb-4">
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-800">Quiz: SQL Server Views (Test 2)</h1>
+      <p id="progress-text" class="text-sm text-slate-500 mt-2">Câu 1 trên 20</p>
+    </div>
+
+    <div id="question-area">
+      <h2 id="question-text" class="text-lg font-semibold text-slate-700 mb-5 leading-relaxed"></h2>
+      <div id="options-container" class="space-y-3">
+        </div>
+    </div>
+
+    <div id="navigation-buttons" class="mt-8 flex justify-between items-center">
+      <button id="prev-btn"
+        class="bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-2 px-6 rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+        Câu Trước
+      </button>
+      <button id="next-btn"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300">
+        Câu Tiếp
+      </button>
+      <button id="submit-btn"
+        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 hidden">
+        Nộp Bài
+      </button>
+    </div>
+  </div>
+
+  <div id="result-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-3xl mx-auto hidden">
+    <h1 class="text-3xl font-bold text-slate-800 text-center">Kết Quả Bài Làm</h1>
+    <div id="score-text" class="text-center text-2xl font-semibold my-6 bg-blue-100 text-blue-800 p-4 rounded-lg"></div>
+    <div id="review-area" class="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+      </div>
+    <div class="text-center mt-8">
+      <button id="restart-btn"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300">
+        Làm Lại
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Dữ liệu 20 câu hỏi về SQL Server Views (Đã sắp xếp theo thứ tự câu 1-20)
+    const quizData = [
+      {
+        question: "Một view phức tạp với nhiều JOIN, GROUP BY, subquery có thể:",
+        options: ["B và C đúng", "Chỉ SELECT được, không thể UPDATE hoặc DELETE", "Không thể cập nhật dữ liệu", "Luôn cập nhật dữ liệu trực tiếp"],
+        answer: "B và C đúng"
+      },
+      {
+        question: "Có thể cấp quyền SELECT trên view mà không cấp quyền trực tiếp trên bảng cơ sở không?",
+        options: ["Chỉ khi view có SCHEMABINDING", "Chỉ khi user là db_owner", "Có", "Không"],
+        answer: "Có"
+      },
+      {
+        question: "Nếu muốn hạn chế cột và hàng mà người dùng nhìn thấy, bạn dùng:",
+        options: ["Table", "Function", "View", "Index"],
+        answer: "View"
+      },
+      {
+        question: "Quyền nào cần để tạo view trong database?",
+        options: ["Quyền SELECT trên bảng cơ sở", "CREATE VIEW", "Tất cả các đáp án trên đều đúng", "ALTER ANY VIEW"],
+        answer: "CREATE VIEW"
+      },
+      {
+        question: "View có thể tham chiếu tới table-valued function không?",
+        options: ["Không, SQL Server không cho phép", "Chỉ khi TVF không có parameter", "Có, giống như tham chiếu bảng", "Chỉ khi function là inline TVF"],
+        answer: "Chỉ khi function là inline TVF"
+      },
+      {
+        question: "View có thể chứa lệnh ORDER BY không?",
+        options: ["Chỉ khi dùng TOP hoặc OFFSET FETCH", "Chỉ khi có SCHEMABINDING", "Luôn được phép", "Không bao giờ được phép"],
+        answer: "Chỉ khi dùng TOP hoặc OFFSET FETCH"
+      },
+      {
+        question: "Một view có thể tham chiếu tới chính nó không?",
+        options: ["Chỉ khi dùng WITH RECURSIVE", "Không, SQL Server không cho phép view tự tham chiếu", "Chỉ khi view là indexed view", "Có, được phép đệ quy"],
+        answer: "Không, SQL Server không cho phép view tự tham chiếu"
+      },
+      {
+        question: "View và Table-Valued Function (TVF) khác nhau ở điểm nào?",
+        options: ["TVF không thể join với bảng khác", "View lưu dữ liệu còn TVF không lưu", "View không nhận tham số, còn TVF có thể nhận tham số", "View luôn nhanh hơn TVF"],
+        answer: "View không nhận tham số, còn TVF có thể nhận tham số"
+      },
+      {
+        question: "Khi một view cơ sở bị xóa, view tham chiếu đến bảng đó sẽ:",
+        options: ["Tự động chuyển sang bảng khác", "Tự động làm mới định nghĩa", "Vẫn tồn tại nhưng trở thành invalid", "Tự động xóa"],
+        answer: "Vẫn tồn tại nhưng trở thành invalid"
+      },
+      {
+        question: "Khi xóa VIEW, dùng lệnh nào?",
+        options: ["DROP VIEW view_name", "REMOVE VIEW view_name", "ALTER VIEW view_name DROP", "DELETE VIEW view_name"],
+        answer: "DROP VIEW view_name"
+      },
+      {
+        question: "VIEW có thể cập nhật dữ liệu không?",
+        options: ["Chỉ khi có WITH CHECK OPTION", "Luôn luôn được", "Không bao giờ được", "Có thể, nếu view đơn giản và không chứa group by, join phức tạp"],
+        answer: "Có thể, nếu view đơn giản và không chứa group by, join phức tạp"
+      },
+      {
+        question: "Một view có thể chứa lệnh UNION không?",
+        options: ["Chỉ khi view là WITH SCHEMABINDING", "Có thể, nhưng view indexed thì không", "Không bao giờ được", "Chỉ khi view là WITH CHECK OPTION"],
+        answer: "Có thể, nhưng view indexed thì không"
+      },
+      {
+        question: "Lệnh nào xóa và tạo lại view một cách an toàn nếu đã tồn tại?",
+        options: ["CREATE OR ALTER VIEW ...", "REPLACE VIEW view_name AS ...", "ALTER VIEW IF EXISTS ...", "DROP VIEW IF EXISTS view_name; CREATE VIEW view_name AS ..."],
+        answer: "CREATE OR ALTER VIEW ..."
+      },
+      {
+        question: "Lệnh nào dùng để đổi tên view?",
+        options: ["ALTER VIEW ... RENAME TO ...", "UPDATE VIEW old_name NAME new_name", "RENAME VIEW old_name TO new_name", "EXEC sp_rename 'old_name', 'new_name'"],
+        answer: "EXEC sp_rename 'old_name', 'new_name'"
+      },
+      {
+        question: "Để chỉnh sửa câu lệnh SELECT của một VIEW, bạn dùng:",
+        options: ["MODIFY VIEW view_name ...", "ALTER VIEW view_name AS SELECT ...", "RECREATE VIEW view_name ...", "UPDATE VIEW view_name AS SELECT ..."],
+        answer: "ALTER VIEW view_name AS SELECT ..."
+      },
+      {
+        question: "View có thể tham chiếu đến bảng trong database khác không?",
+        options: ["Chỉ khi dùng linked server", "Được, nếu chỉ định đầy đủ tên [database].[schema].[table]", "Chỉ khi có quyền sysadmin", "Không bao giờ được"],
+        answer: "Được, nếu chỉ định đầy đủ tên [database].[schema].[table]"
+      },
+      {
+        question: "VIEW có thể lấy dữ liệu từ:",
+        options: ["Nhiều bảng bằng JOIN", "Một bảng duy nhất", "Tất cả các đáp án trên đều đúng", "Một VIEW khác"],
+        answer: "Tất cả các đáp án trên đều đúng"
+      },
+      {
+        question: "Trong SQL Server, VIEW là gì?",
+        options: ["Một bảng vật lý lưu trữ dữ liệu", "Một bảng ảo dựa trên câu lệnh SELECT", "Một thủ tục lưu trữ (stored procedure)", "Một hàm trả về bảng"],
+        answer: "Một bảng ảo dựa trên câu lệnh SELECT"
+      },
+      {
+        question: "Để xem danh sách tất cả view trong database:",
+        options: ["SELECT * FROM information_schema.views", "Dùng Object Explorer trong SSMS", "Tất cả các đáp án trên đều đúng", "SELECT * FROM sys.views"],
+        answer: "Tất cả các đáp án trên đều đúng"
+      },
+      {
+        question: "Lệnh nào tạo VIEW cơ bản?",
+        options: ["CREATE VIEW view_name AS SELECT ...", "CREATE PROCEDURE view_name AS SELECT ...", "CREATE FUNCTION view_name() RETURNS TABLE ...", "CREATE TABLE view_name AS SELECT ..."],
+        answer: "CREATE VIEW view_name AS SELECT ..."
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+
+    const quizContainer = document.getElementById('quiz-container');
+    const resultContainer = document.getElementById('result-container');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    const restartBtn = document.getElementById('restart-btn');
+    const progressText = document.getElementById('progress-text');
+
+    function loadQuestion() {
+      const currentQuestion = quizData[currentQuestionIndex];
+      questionText.textContent = `Câu ${currentQuestionIndex + 1}: ${currentQuestion.question}`;
+      optionsContainer.innerHTML = '';
+
+      currentQuestion.options.forEach((option, index) => {
+        const optionId = `q${currentQuestionIndex}-option${index}`;
+        const optionWrapper = document.createElement('div');
+        optionWrapper.classList.add('quiz-option', 'p-4', 'border', 'rounded-lg', 'cursor-pointer', 'transition-colors', 'duration-200', 'noselect');
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.id = optionId;
+        input.name = `q${currentQuestionIndex}`;
+        input.value = option;
+        input.className = "hidden";
+
+        const label = document.createElement('label');
+        label.htmlFor = optionId;
+        label.textContent = option;
+        label.className = "block w-full cursor-pointer";
+
+        optionWrapper.appendChild(input);
+        optionWrapper.appendChild(label);
+        optionsContainer.appendChild(optionWrapper);
+
+        optionWrapper.addEventListener('click', () => handleOptionSelect(optionWrapper, input));
+      });
+
+      restoreAnswer();
+      updateProgress();
+      updateButtonVisibility();
+    }
+
+    function handleOptionSelect(wrapper, input) {
+      const allOptions = optionsContainer.querySelectorAll('.quiz-option');
+      allOptions.forEach(opt => {
+        opt.classList.remove('selected');
+        const inp = opt.querySelector('input');
+        inp.checked = false;
+      });
+
+      wrapper.classList.add('selected');
+      input.checked = true;
+      saveAnswer();
+    }
+
+    function saveAnswer() {
+      const selectedOption = document.querySelector(`input[name="q${currentQuestionIndex}"]:checked`);
+      userAnswers[currentQuestionIndex] = selectedOption ? selectedOption.value : null;
+    }
+
+    function restoreAnswer() {
+      const savedAnswer = userAnswers[currentQuestionIndex];
+      if (savedAnswer === null) return;
+
+      const inputs = document.querySelectorAll(`input[name="q${currentQuestionIndex}"]`);
+      inputs.forEach(input => {
+        if (input.value === savedAnswer) {
+          input.checked = true;
+          input.parentElement.classList.add('selected');
+        }
+      });
+    }
+
+    function updateProgress() {
+      progressText.textContent = `Câu ${currentQuestionIndex + 1} trên ${quizData.length}`;
+    }
+
+    function updateButtonVisibility() {
+      prevBtn.disabled = currentQuestionIndex === 0;
+      if (currentQuestionIndex === quizData.length - 1) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+    }
+
+    function showNextQuestion() {
+      if (currentQuestionIndex < quizData.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion();
+      }
+    }
+
+    function showPrevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        loadQuestion();
+      }
+    }
+
+    function submitQuiz() {
+      quizContainer.classList.add('hidden');
+      resultContainer.classList.remove('hidden');
+      showResults();
+    }
+
+    function showResults() {
+      let score = 0;
+      const reviewArea = document.getElementById('review-area');
+      reviewArea.innerHTML = '';
+
+      quizData.forEach((question, index) => {
+        const userAnswer = userAnswers[index];
+        let isCorrect = false;
+
+        if (userAnswer === question.answer) {
+          isCorrect = true;
+          score++;
+        }
+
+        const reviewBlock = document.createElement('div');
+        reviewBlock.className = `p-4 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`;
+
+        let answerHtml = `
+            <p class="font-bold text-slate-800">${index + 1}. ${question.question}</p>
+            <p class="mt-2 text-sm"><b>Bạn chọn:</b> ${userAnswer ? userAnswer : '<span class="text-red-500">Chưa trả lời</span>'}</p>
+            <p class="mt-1 text-sm ${isCorrect ? 'text-green-700' : 'text-red-700'}"><b>Đáp án đúng:</b> ${question.answer}</p>
+        `;
+        reviewBlock.innerHTML = answerHtml;
+        reviewArea.appendChild(reviewBlock);
+      });
+
+      const scoreText = document.getElementById('score-text');
+      const percentage = Math.round((score / quizData.length) * 100);
+      scoreText.innerHTML = `Bạn đã trả lời đúng <span class="font-bold text-2xl">${score}</span> / ${quizData.length} câu!<br><span class="text-sm text-blue-600">(${percentage}%)</span>`;
+    }
+
+    function restartQuiz() {
+      currentQuestionIndex = 0;
+      userAnswers.fill(null);
+      resultContainer.classList.add('hidden');
+      quizContainer.classList.remove('hidden');
+      loadQuestion();
+    }
+
+    prevBtn.addEventListener('click', showPrevQuestion);
+    nextBtn.addEventListener('click', showNextQuestion);
+    submitBtn.addEventListener('click', submitQuiz);
+    restartBtn.addEventListener('click', restartQuiz);
+
+    window.onload = loadQuestion;
+  </script>
+</body>
+
+</html>
